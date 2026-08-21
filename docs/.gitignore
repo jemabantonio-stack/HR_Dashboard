@@ -1,0 +1,10 @@
+# Plaintext data must never be committed here.
+# Only .enc blobs are published, and only by the HR_Data workflow.
+*.xlsx
+*.xlsm
+*.geojson
+*.csv
+*.shp
+*.qgz
+.env
+*.key
