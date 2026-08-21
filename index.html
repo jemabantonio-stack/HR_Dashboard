@@ -1,0 +1,4107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="robots" content="noindex, nofollow">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hog Ranch Drillhole Dashboard</title>
+  <link rel="stylesheet" href="leaflet.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    html,
+    body {
+      height: 100%;
+      overflow-x: auto;
+      overflow-y: auto;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      min-width: 1280px;
+      font-family: 'Inter', sans-serif;
+      background: radial-gradient(circle at top left, #0B3446 0%, #263A38 40%, #0B3446 100%);
+      color: #f5f8ff;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 20px;
+      padding: 20px;
+    }
+
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 24px;
+      background: rgba(67, 51, 28, 0.16);
+      border: 1px solid rgba(160, 166, 120, 0.25);
+      border-radius: 20px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.22);
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #A0A678 0%, #43331C 100%);
+      display: grid;
+      place-items: center;
+      padding: 4px;
+      box-sizing: border-box;
+      overflow: hidden;
+      box-shadow: 0 18px 36px rgba(67, 51, 28, 0.2);
+    }
+
+    .brand-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+      display: block;
+    }
+
+    .brand-title {
+      display: grid;
+      gap: 4px;
+    }
+
+    .brand-title h1 {
+      margin: 0;
+      font-size: 1.3rem;
+      letter-spacing: 0.02em;
+    }
+
+    .brand-title p {
+      margin: 0;
+      color: #A0A678;
+      font-size: 0.95rem;
+    }
+
+    .controls {
+      display: grid;
+      justify-items: end;
+      gap: 8px;
+    }
+
+    .controls-row {
+      display: grid;
+      grid-template-columns: repeat(3, 250px);
+      justify-content: end;
+      align-items: stretch;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .control-capsule {
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      min-height: 36px;
+      padding: 4px 8px;
+      width: 250px;
+      box-sizing: border-box;
+      border-radius: 14px;
+      background: rgba(11, 52, 70, 0.22);
+      border: 1px solid rgba(160, 166, 120, 0.25);
+      flex: 0 0 auto;
+    }
+
+    .control-capsule label,
+    .control-capsule input,
+    .control-capsule select,
+    .control-capsule button {
+      font-size: 0.8rem;
+    }
+
+    .control-capsule label {
+      color: #A0A678;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .control-capsule input[type="file"] {
+      color: #f5f8ff;
+      cursor: pointer;
+      border-radius: 12px;
+      overflow: hidden;
+      padding: 0;
+      width: 160px;
+      min-width: 160px;
+      max-width: 160px;
+      background: rgba(67, 51, 28, 0.2);
+      border: 1px solid rgba(160, 166, 120, 0.25);
+    }
+
+    .control-capsule input[type="file"]::file-selector-button {
+      margin: 0;
+      height: 28px;
+      padding: 0 10px;
+      border: none;
+      border-radius: 10px;
+      background: rgba(67, 51, 28, 0.25);
+      color: #f5f8ff;
+      font-weight: 700;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .control-capsule input[type="file"]::file-selector-button:hover {
+      background: rgba(67, 51, 28, 0.35);
+    }
+
+    .control-capsule input[type="file"]::file-selector-button::after {
+      content: "Choose file";
+      font-size: 0.8rem;
+    }
+
+    .control-capsule select {
+      width: 160px;
+      min-width: 160px;
+      max-width: 160px;
+      height: 36px;
+      padding: 0 8px;
+      background: rgba(67, 51, 28, 0.2);
+      color: #f5f8ff;
+      border: 1px solid rgba(160, 166, 120, 0.25);
+      border-radius: 12px;
+      outline: none;
+    }
+
+    #drillholeSelect,
+    #baseMapSelect {
+      width: 160px;
+      max-width: 160px;
+    }
+
+    .control-capsule select option {
+      color: #14222d;
+      background: rgba(255, 255, 255, 0.96);
+    }
+
+    .overlap-popup {
+      display: grid;
+      gap: 8px;
+      min-width: 190px;
+    }
+
+    .overlap-popup-title {
+      font-weight: 700;
+      color: #0b3446;
+      font-size: 0.95rem;
+    }
+
+    .overlap-popup-list {
+      display: grid;
+      gap: 6px;
+    }
+
+    .overlap-popup-button {
+      border: 1px solid rgba(67, 51, 28, 0.2);
+      border-radius: 10px;
+      background: rgba(160, 166, 120, 0.2);
+      color: #0b3446;
+      padding: 7px 10px;
+      text-align: left;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 420px;
+      gap: 0;
+      min-height: 0;
+      align-items: stretch;
+    }
+
+    .dashboard > * {
+      min-height: 0;
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      min-width: 0;
+      border-radius: 28px 0 0 28px;
+      overflow: hidden;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
+      border: 1px solid rgba(160, 166, 120, 0.18);
+      border-right: none;
+    }
+
+    #details {
+      padding: 24px;
+      border-radius: 0 28px 28px 0;
+      background: rgba(11, 52, 70, 0.28);
+      border: 1px solid rgba(67, 51, 28, 0.28);
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.24);
+      display: grid;
+      align-content: start;
+      align-items: start;
+      gap: 20px;
+      overflow-y: auto;
+    }
+
+    .sidebar-card {
+      display: grid;
+      gap: 12px;
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sidebar-card h3 {
+      margin: 0;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #A0A678;
+      letter-spacing: 0.01em;
+    }
+
+    #details h2 {
+      margin: 0;
+      font-size: 1.35rem;
+    }
+
+    .details-tabs {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      margin-top: 10px;
+    }
+
+    #detailsTabs {
+      margin-top: 0;
+      margin-bottom: 16px;
+    }
+
+    .details-tab {
+      border: 1px solid transparent;
+      background: transparent;
+      color: rgba(255, 255, 255, 0.72);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .details-tab.is-active {
+      color: #f5f8ff;
+      background: rgba(160, 166, 120, 0.2);
+      border-color: rgba(160, 166, 120, 0.35);
+    }
+
+    .details-panel {
+      display: none;
+    }
+
+    .details-panel.is-active {
+      display: grid;
+      gap: 16px;
+    }
+
+    .drillpad-action-legend {
+      margin-top: 8px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(11, 52, 70, 0.16);
+      border: 1px solid rgba(67, 51, 28, 0.28);
+      gap: 8px;
+    }
+
+    .drillpad-action-legend-title {
+      margin: 0;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: rgba(245, 248, 255, 0.8);
+      text-transform: uppercase;
+    }
+
+    .drillpad-action-legend-items {
+      display: grid;
+      gap: 8px;
+    }
+
+    .drillpad-action-legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: rgba(245, 248, 255, 0.92);
+      font-weight: 600;
+    }
+
+    .drillpad-action-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      flex: 0 0 10px;
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12);
+    }
+
+    .drillpad-action-dot.built {
+      background: #5CB85C;
+    }
+
+    .drillpad-action-dot.building {
+      background: #3498DB;
+    }
+
+    .drillpad-action-dot.old-pending-approval {
+      background: #E67E22;
+    }
+
+    .drillpad-action-dot.new {
+      background: #F1C40F;
+    }
+
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      background: rgba(160, 166, 120, 0.18);
+      color: #A0A678;
+    }
+
+    .status-completed {
+      background: rgba(67, 51, 28, 0.16);
+      color: #f5f8ff;
+    }
+
+    .status-planned {
+      background: rgba(139, 138, 68, 0.18);
+      color: #f5f8ff;
+    }
+
+    .details-grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .detail-card {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(11, 52, 70, 0.12);
+      border: 1px solid rgba(67, 51, 28, 0.22);
+    }
+
+    .detail-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 14px 16px;
+      border-radius: 16px;
+      background: rgba(11, 52, 70, 0.12);
+    }
+
+    .si-table tbody tr:nth-child(odd) td {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .si-table-container {
+      container-type: inline-size;
+      container-name: si-container;
+      max-width: 100%;
+      overflow-x: auto;
+      padding-top: 6px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .si-table {
+      border-collapse: collapse;
+      table-layout: auto;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .si-table th,
+    .si-table td {
+      padding: 8px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      text-align: left;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    .si-table th {
+      background: rgba(255, 255, 255, 0.07);
+      color: #f5f8ff;
+      font-weight: 700;
+      line-height: 1.2;
+      font-size: 0.85rem;
+    }
+
+    .si-table th .si-header-label {
+      display: block;
+      white-space: nowrap;
+    }
+
+    .si-table th .si-header-unit {
+      display: block;
+      font-size: 0.78em;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.65);
+      line-height: 1.1;
+      margin-top: 2px;
+      white-space: nowrap;
+    }
+
+    .si-table td {
+      color: rgba(255, 255, 255, 0.82);
+      font-size: 0.85rem;
+      line-height: 1.25;
+    }
+
+    .depth-summary-card {
+      gap: 6px;
+    }
+
+    .depth-summary-rows {
+      display: grid;
+      gap: 2px;
+    }
+
+    .depth-summary-row {
+      padding: 10px 14px;
+      border-radius: 8px;
+      background: transparent;
+    }
+
+    .detail-row strong {
+      font-size: 0.95rem;
+      color: #f5f8ff;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+    }
+
+    .detail-row span {
+      color: rgba(255, 255, 255, 0.72);
+      font-size: 0.95rem;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .geology-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(160, 166, 120, 0.4);
+      background: rgba(160, 166, 120, 0.2);
+      color: #f5f8ff;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.82rem;
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+
+    .geology-link:hover {
+      background: rgba(160, 166, 120, 0.3);
+      border-color: rgba(160, 166, 120, 0.6);
+    }
+
+    .geology-web-note {
+      margin: 0;
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.6);
+      text-align: right;
+    }
+
+    .actual-grid {
+      display: grid;
+      gap: 8px;
+    }
+
+    .actual-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .actual-row:last-child {
+      border-bottom: none;
+      padding-bottom: 2px;
+    }
+
+    .actual-label {
+      color: #f5f8ff;
+      font-size: 0.82rem;
+      letter-spacing: 0.01em;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .actual-value {
+      color: rgba(255, 255, 255, 0.72);
+      font-size: 0.82rem;
+      line-height: 1.2;
+      text-align: right;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .coord-cluster {
+      display: grid;
+      gap: 8px;
+      padding: 10px 0 2px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .coord-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0 2px;
+    }
+
+    .coord-line-value {
+      color: rgba(255, 255, 255, 0.72);
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+      font-size: 0.86rem;
+      line-height: 1.2;
+    }
+
+    .plan-actual {
+      display: grid;
+      gap: 12px;
+      padding: 0;
+      border-radius: 0;
+      background: transparent;
+    }
+
+    .plan-actual div {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: baseline;
+    }
+
+    .plan-actual strong {
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      text-transform: none;
+      color: #f5f8ff;
+    }
+
+    .plan-actual span {
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.82);
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .accordion-card-body .detail-row strong,
+    .actual-label,
+    .plan-actual strong {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+
+    .accordion-card-body .detail-row span,
+    .actual-value,
+    .plan-actual span {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .accordion-card-body .detail-row {
+      padding: 10px 12px;
+      gap: 10px;
+    }
+
+    .metric-divider {
+      display: block;
+      height: 1px;
+      margin: 2px 0;
+      background: rgba(255, 255, 255, 0.16);
+    }
+
+    .plan-actual .metric {
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .panel-note {
+      color: rgba(255, 255, 255, 0.68);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+
+    .panel-note.panel-note-small {
+      font-size: 0.74rem;
+      line-height: 1.4;
+    }
+
+    .data-availability-note {
+      padding: 10px 14px;
+      border-radius: 12px;
+      background: rgba(160, 166, 120, 0.08);
+      border: 1px solid rgba(160, 166, 120, 0.22);
+      color: rgba(255, 255, 255, 0.82);
+      font-size: 0.88rem;
+      line-height: 1.4;
+    }
+
+    .assay-coverage-note {
+      margin-top: 16px;
+      border-radius: 14px;
+      background: rgba(160, 166, 120, 0.16);
+      border: 1px solid rgba(160, 166, 120, 0.4);
+      color: #f5f8ff;
+      overflow: hidden;
+    }
+
+    .assay-coverage-note strong {
+      color: #A0A678;
+      font-size: 1.05rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .assay-coverage-toggle {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 16px;
+      border: none;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .assay-coverage-toggle:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .assay-coverage-text {
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+
+    .assay-coverage-arrow {
+      flex: 0 0 auto;
+      font-size: 0.85rem;
+      color: #A0A678;
+      transition: transform 0.2s ease;
+    }
+
+    .assay-coverage-note.is-expanded .assay-coverage-arrow {
+      transform: rotate(90deg);
+    }
+
+    .assay-coverage-list {
+      display: none;
+      flex-direction: column;
+      gap: 4px;
+      margin: 0 12px 12px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
+    .assay-coverage-note.is-expanded .assay-coverage-list {
+      display: flex;
+    }
+
+    .assay-coverage-hole {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: none;
+      background: rgba(255, 255, 255, 0.05);
+      color: #f5f8ff;
+      font: inherit;
+      font-size: 0.85rem;
+      text-align: left;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .assay-coverage-hole:hover {
+      background: rgba(160, 166, 120, 0.28);
+    }
+
+    .assay-coverage-hole-count {
+      flex: 0 0 auto;
+      color: rgba(255, 255, 255, 0.65);
+      font-size: 0.78rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    #messages {
+      color: rgba(255, 255, 255, 0.68);
+      font-size: 0.98rem;
+    }
+
+    #drillholeLegends {
+      display: grid;
+      gap: 12px;
+    }
+
+    .legend {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      padding: 12px 4px;
+    }
+
+    #drillholeLegends .legend:not(:first-child) {
+      padding-top: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .status-filter {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 0.87rem;
+      color: #d7e1ff;
+      cursor: pointer;
+      font: inherit;
+      line-height: 1;
+      transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    }
+
+    .status-pill:hover {
+      border-color: rgba(160, 166, 120, 0.4);
+    }
+
+    .status-pill.is-active {
+      background: rgba(160, 166, 120, 0.22);
+      border-color: rgba(160, 166, 120, 0.45);
+      color: #f5f8ff;
+    }
+
+    .detail-top-button {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      display: none;
+      border: none;
+      border-radius: 999px;
+      padding: 7px 11px;
+      background: rgba(67, 51, 28, 0.9);
+      color: #f5f8ff;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+      z-index: 1100;
+    }
+
+    .detail-top-button.is-visible {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #A0A678;
+      font-size: 0.95rem;
+    }
+
+    .legend-dot {
+      width: 14px;
+      height: 14px;
+      min-width: 14px;
+      min-height: 14px;
+      flex: 0 0 14px;
+      aspect-ratio: 1 / 1;
+      border-radius: 50%;
+      display: block;
+      box-sizing: border-box;
+      transform: translateZ(0);
+      overflow: hidden;
+      border: 2px solid #ffffff;
+      box-shadow: 0 0 0 2px rgba(0,0,0,0.12) inset;
+    }
+
+    .legend-item .legend-dot {
+      width: 14px;
+      height: 14px;
+      flex: 0 0 14px;
+      border-radius: 999px;
+    }
+
+    .dot-active {
+      background: #8B8A44;
+    }
+
+    .dot-completed {
+      background: #43331C;
+    }
+
+    .dot-planned {
+      background: #A0A678;
+    }
+
+    .legend-shape {
+      width: 14px;
+      height: 14px;
+      min-width: 14px;
+      flex: 0 0 14px;
+      background: transparent;
+      border: 2px solid #ffffff;
+      box-sizing: border-box;
+      display: block;
+    }
+
+    .legend-shape.is-round {
+      border-radius: 50%;
+    }
+
+    .legend-shape.is-square {
+      border-radius: 0;
+    }
+
+    .legend-shape.is-rounded-square {
+      border-radius: 35%;
+    }
+
+    .crs-input {
+      width: 92px;
+      height: 36px;
+      padding: 0 8px;
+      border-radius: 10px;
+      border: 1px solid rgba(160, 166, 120, 0.25);
+      background: rgba(11, 52, 70, 0.16);
+      color: #f5f8ff;
+      outline: none;
+    }
+
+    .crs-button {
+      border: none;
+      border-radius: 10px;
+      height: 30px;
+      padding: 0 10px;
+      background: rgba(67, 51, 28, 0.25);
+      color: #f5f8ff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .status-summary {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 4px;
+    }
+
+    #drillholeStatusGroups {
+      display: grid;
+      gap: 6px;
+    }
+
+    .status-subheading {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.5);
+      margin: 4px 2px -2px;
+    }
+
+    #drillholeStatusGroups .status-subheading:not(:first-child) {
+      padding-top: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .status-total-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 4px;
+      font-size: 0.94rem;
+    }
+
+    .status-total-row .status-summary-count {
+      font-size: 1.15rem;
+      color: #f5f8ff;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .status-pie {
+      width: 92px;
+      height: 92px;
+      border-radius: 50%;
+      position: relative;
+      background: conic-gradient(#43331C 0deg 0deg, #A0A678 0deg 360deg);
+      box-shadow: inset 0 0 0 7px rgba(255,255,255,0.06);
+    }
+
+    .status-pie::after {
+      content: '';
+      position: absolute;
+      inset: 12px;
+      border-radius: 50%;
+      background: rgba(11, 52, 70, 0.18);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .status-summary-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .status-summary-item {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      column-gap: 8px;
+      align-items: start;
+      font-size: 0.94rem;
+    }
+
+    .status-summary-label {
+      grid-row: 1;
+      grid-column: 1;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #dfe7ff;
+    }
+
+    .status-summary-count {
+      grid-row: 1;
+      grid-column: 2;
+    }
+
+    .status-summary-pct {
+      grid-row: 1;
+      grid-column: 3;
+    }
+
+    .status-summary-count,
+    .status-summary-pct {
+      justify-self: end;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .status-summary-count {
+      color: #f5f8ff;
+      font-weight: 700;
+    }
+
+    .status-summary-pct {
+      color: rgba(255, 255, 255, 0.72);
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      min-width: 10px;
+      min-height: 10px;
+      flex: 0 0 10px;
+      aspect-ratio: 1 / 1;
+      border-radius: 50%;
+      display: inline-block;
+      box-sizing: border-box;
+      transform: translateZ(0);
+      overflow: hidden;
+      margin-right: 6px;
+    }
+
+    .status-dot-complete {
+      background: #43331C;
+    }
+
+    .status-dot-active {
+      background: #8B8A44;
+    }
+
+    .status-dot-planned {
+      background: #A0A678;
+    }
+
+    .dls-card,
+    .accordion-card {
+      border-radius: 18px;
+      background: rgba(11, 52, 70, 0.12);
+      border: 1px solid rgba(67, 51, 28, 0.2);
+      overflow: hidden;
+    }
+
+    .dls-card-header,
+    .accordion-card-header {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 18px 12px;
+      border: none;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+      background: transparent;
+      color: #f5f8ff;
+      cursor: pointer;
+      font: inherit;
+      text-align: left;
+      transition: background 0.2s ease;
+    }
+
+    .dls-card.expanded .dls-card-header,
+    .accordion-card.expanded .accordion-card-header {
+      background: transparent;
+    }
+
+    .dls-card-header small,
+    .accordion-card-header small {
+      display: block;
+      margin-top: 4px;
+      color: #A0A678;
+      font-size: 0.82rem;
+    }
+
+    .dls-card-toggle,
+    .accordion-card-toggle {
+      font-size: 1rem;
+      color: #A0A678;
+      transition: transform 0.2s ease;
+    }
+
+    .dls-card.expanded .dls-card-toggle,
+    .accordion-card.expanded .accordion-card-toggle {
+      transform: rotate(90deg);
+    }
+
+    .dls-card-body,
+    .accordion-card-body {
+      display: grid;
+      gap: 8px;
+      padding: 12px 18px 14px;
+    }
+
+    .dls-card.collapsed .dls-card-body,
+    .accordion-card.collapsed .accordion-card-body {
+      display: none;
+    }
+
+    .dls-record {
+      display: grid;
+      gap: 6px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .dls-record.highlighted {
+      border: 1px solid rgba(255, 140, 0, 0.45);
+      background: rgba(255, 140, 0, 0.15);
+    }
+
+    .dls-record div {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 0.92rem;
+    }
+
+    @keyframes blink-marker {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    @keyframes completed-marker-pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.2); opacity: 0.75; }
+    }
+
+    @keyframes completed-halo-pulse {
+      0%, 100% { transform: scale(0.9); opacity: 0.35; }
+      50% { transform: scale(1.75); opacity: 0; }
+    }
+
+    .completed-marker-shape {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: completed-marker-pulse 1.4s ease-in-out infinite;
+      filter: drop-shadow(0 0 10px rgba(255,255,255,0.85));
+    }
+
+    .completed-marker-halo {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: completed-halo-pulse 1.4s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    /* Fixed layout: intentionally no responsive breakpoint to prevent reflow between screens. */
+  </style>
+  </head>
+  <body>
+  <header>
+    <div class="brand">
+      <div class="brand-icon"><img src="HRMI_LOGO.png" alt="HRMI logo" /></div>
+      <div class="brand-title">
+        <h1>Hog Ranch Dashboard</h1>
+        <p>Interactive drillhole status map with planned vs actual details.</p>
+      </div>
+    </div>
+      <div class="controls">
+      <div class="controls-row">
+        <div class="control-capsule">
+          <label for="fileInput">Excel</label>
+          <input id="fileInput" type="file" accept=".xlsx,.xlsm,.xls,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel.sheet.macroEnabled.12" />
+        </div>
+        <div class="control-capsule">
+          <label for="shapefileInput">Pads</label>
+          <input id="shapefileInput" type="file" accept=".zip,.geojson,.json,application/zip,application/json" />
+        </div>
+        <div class="control-capsule">
+          <label for="tenementInput">Tenement</label>
+          <input id="tenementInput" type="file" accept=".zip,.geojson,.json,application/zip,application/json" />
+        </div>
+      </div>
+      <div class="controls-row">
+        <div class="control-capsule">
+          <label for="drillholeSelect">Drillhole</label>
+          <select id="drillholeSelect">
+            <option value="">Choose drillhole</option>
+          </select>
+        </div>
+        <div class="control-capsule">
+          <label for="crsInput">UTM zone</label>
+          <input id="crsInput" class="crs-input" type="text" value="11N" placeholder="31N or 32631" />
+          <button id="applyCrsButton" class="crs-button" type="button">Apply</button>
+        </div>
+        <div class="control-capsule">
+          <label for="baseMapSelect">Base</label>
+          <select id="baseMapSelect">
+            <option value="CartoDB Dark Matter">CartoDB Dark Matter</option>
+            <option value="CartoDB Positron">CartoDB Positron</option>
+            <option value="Esri World Imagery" selected>Esri World Imagery</option>
+            <option value="OpenStreetMap">OpenStreetMap</option>
+            <option value="OpenStreetMap HOT">OpenStreetMap HOT</option>
+            <option value="CartoDB Voyager">CartoDB Voyager</option>
+            <option value="Stamen Toner Lite">Stamen Toner Lite</option>
+            <option value="Stamen Terrain">Stamen Terrain</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="dashboard">
+    <div id="map"></div>
+
+    <aside id="details">
+      <div>
+        <div class="details-tabs" id="detailsTabs">
+          <button class="details-tab is-active" type="button" data-tab="general">General</button>
+          <button class="details-tab" type="button" data-tab="drillhole">Drillhole Details</button>
+          <button class="details-tab" type="button" data-tab="drillpad">Drillpad Details</button>
+        </div>
+        <h2>Details</h2>
+        <p class="panel-note">Click a point on the map to display drillhole and drillpad information.</p>
+        <div class="details-tabs" id="topLevelTabs">
+          <button class="details-tab" type="button" data-top-tab="general">General</button>
+          <button class="details-tab is-active" type="button" data-top-tab="survey">Survey</button>
+          <button class="details-tab" type="button" data-top-tab="geology">Geology</button>
+          <button class="details-tab" type="button" data-top-tab="assay">Assay</button>
+        </div>
+        <div class="assay-coverage-note" id="assayCoverageNote" style="display:none;">
+          <button type="button" class="assay-coverage-toggle" id="assayCoverageToggle">
+            <span class="assay-coverage-text" id="assayCoverageText"></span>
+            <span class="assay-coverage-arrow" aria-hidden="true">▸</span>
+          </button>
+          <div class="assay-coverage-list" id="assayCoverageList"></div>
+        </div>
+        <div id="drillpadActionLegend" class="drillpad-action-legend details-panel" aria-label="Drillpad action color legend">
+          <p class="drillpad-action-legend-title">Drillpad Status Colors</p>
+          <div class="drillpad-action-legend-items">
+            <span class="drillpad-action-legend-item"><span class="drillpad-action-dot built"></span>Built</span>
+            <span class="drillpad-action-legend-item"><span class="drillpad-action-dot building"></span>Building</span>
+            <span class="drillpad-action-legend-item"><span class="drillpad-action-dot old-pending-approval"></span>Old - Pending Approval</span>
+            <span class="drillpad-action-legend-item"><span class="drillpad-action-dot new"></span>New</span>
+          </div>
+        </div>
+      </div>
+      <div class="sidebar-card" id="statusSidebarCard">
+        <h3 id="statusCardTitle">Status</h3>
+        <div id="drillholeStatusGroups">
+          <div class="status-subheading">RC</div>
+          <div class="status-summary">
+            <div id="statusPieChartRC" class="status-pie"></div>
+            <div id="statusSummaryContentRC" class="status-summary-list"></div>
+          </div>
+          <div class="status-subheading">Core</div>
+          <div class="status-summary">
+            <div id="statusPieChartDD" class="status-pie"></div>
+            <div id="statusSummaryContentDD" class="status-summary-list"></div>
+          </div>
+          <div class="status-subheading">Planned (All)</div>
+          <div class="status-total-row">
+            <span class="status-summary-label"><span class="status-dot status-dot-planned"></span>Planned</span>
+            <strong class="status-summary-count" id="statusPlannedTotalCount">–</strong>
+          </div>
+        </div>
+        <div id="drillpadStatusGroup" style="display:none;">
+          <div class="status-summary">
+            <div id="statusPieChart" class="status-pie"></div>
+            <div id="statusSummaryContent" class="status-summary-list"></div>
+          </div>
+        </div>
+        <div class="status-filter" id="statusFilterControls">
+          <button class="status-pill is-active" type="button" data-status="all">All</button>
+          <button class="status-pill" type="button" data-status="completed">Completed</button>
+          <button class="status-pill" type="button" data-status="active">Active</button>
+          <button class="status-pill" type="button" data-status="planned">Planned</button>
+        </div>
+        <div id="drillholeLegends">
+          <div class="legend">
+            <div class="legend-item"><span class="legend-dot dot-active"></span>Active</div>
+            <div class="legend-item"><span class="legend-dot dot-planned"></span>Planned</div>
+            <div class="legend-item"><span class="legend-dot dot-completed"></span>Completed</div>
+          </div>
+          <div class="legend" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
+            <div class="legend-item"><span class="legend-shape is-round"></span>RC</div>
+            <div class="legend-item"><span class="legend-shape is-square"></span>Core</div>
+            <div class="legend-item"><span class="legend-shape is-rounded-square"></span>Planned</div>
+          </div>
+        </div>
+      </div>
+      <div class="sidebar-card">
+        <h3 id="geometryMetricsTitle">Geometry metrics</h3>
+        <div id="selectedDetails" class="details-grid details-panel"></div>
+        <div id="selectedGeneralDetails" class="details-grid details-panel is-active"></div>
+        <div id="selectedSurveyDetails" class="details-grid details-panel"></div>
+        <div id="selectedGeologyDetails" class="details-grid details-panel"></div>
+        <div id="selectedAssayDetails" class="details-grid details-panel"></div>
+        <div id="selectedPadDetails" class="details-grid details-panel"></div>
+      </div>
+      <div id="messages">No data loaded yet. Please upload the <strong>Hog_Ranch.xlsm</strong> file.</div>
+      <button id="scrollToTopButton" class="detail-top-button" type="button" aria-label="Scroll to top">↑ Top</button>
+    </aside>
+  </div>
+
+  <script src="leaflet.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.11.0/proj4.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4leaflet/1.0.2/proj4leaflet.min.js"></script>
+  <script src="xlsx.full.min.js"></script>
+  <script src="https://unpkg.com/shpjs@latest/dist/shp.min.js"></script>
+  <script>
+    const mapElement = document.getElementById('map');
+    const fileInput = document.getElementById('fileInput');
+    const shapefileInput = document.getElementById('shapefileInput');
+    const tenementInput = document.getElementById('tenementInput');
+    const drillholeSelect = document.getElementById('drillholeSelect');
+    const baseMapSelect = document.getElementById('baseMapSelect');
+    const crsInput = document.getElementById('crsInput');
+    const applyCrsButton = document.getElementById('applyCrsButton');
+    const detailsPanel = document.getElementById('details');
+    const topLevelTabs = document.getElementById('topLevelTabs');
+    const assayCoverageNote = document.getElementById('assayCoverageNote');
+    const assayCoverageToggle = document.getElementById('assayCoverageToggle');
+    const assayCoverageText = document.getElementById('assayCoverageText');
+    const assayCoverageList = document.getElementById('assayCoverageList');
+    const detailsTabs = document.getElementById('detailsTabs');
+    const drillpadActionLegend = document.getElementById('drillpadActionLegend');
+    const messages = document.getElementById('messages');
+    const selectedDetails = document.getElementById('selectedDetails');
+    const selectedGeneralDetails = document.getElementById('selectedGeneralDetails');
+    const selectedSurveyDetails = document.getElementById('selectedSurveyDetails');
+    const selectedGeologyDetails = document.getElementById('selectedGeologyDetails');
+    const selectedAssayDetails = document.getElementById('selectedAssayDetails');
+    const selectedPadDetails = document.getElementById('selectedPadDetails');
+    const scrollToTopButton = document.getElementById('scrollToTopButton');
+    const statusSidebarCard = document.getElementById('statusSidebarCard');
+    const statusCardTitle = document.getElementById('statusCardTitle');
+    const statusPieChart = document.getElementById('statusPieChart');
+    const statusSummaryContent = document.getElementById('statusSummaryContent');
+    const drillholeStatusGroups = document.getElementById('drillholeStatusGroups');
+    const drillpadStatusGroup = document.getElementById('drillpadStatusGroup');
+    const drillholeLegends = document.getElementById('drillholeLegends');
+    const statusPieChartRC = document.getElementById('statusPieChartRC');
+    const statusSummaryContentRC = document.getElementById('statusSummaryContentRC');
+    const statusPieChartDD = document.getElementById('statusPieChartDD');
+    const statusSummaryContentDD = document.getElementById('statusSummaryContentDD');
+    const statusPlannedTotalCount = document.getElementById('statusPlannedTotalCount');
+    const statusFilterControls = document.getElementById('statusFilterControls');
+    const geometryMetricsTitle = document.getElementById('geometryMetricsTitle');
+    let map;
+    let markerGroup;
+    let currentBaseLayer;
+    let currentBaseKey = baseMapSelect.value || 'Esri World Imagery';
+    let currentCrsCode = crsInput.value.trim() || 'EPSG:32631';
+    let drillholePoints = [];
+    let selectedMarker = null;
+    let actualDepthData = {};
+    let actualTotalDepthData = {};
+    let actualRecordsData = {};
+    let loadedRows = [];
+    let loadedShapeGeoJson = null;
+    let loadedTenementGeoJson = null;
+    let shapefileLayer = null;
+    let tenementLayer = null;
+    let completedPulseIntervals = [];
+    let currentStatusFilter = 'all';
+    let currentTopLevelTab = 'survey';
+    let currentDetailsTab = 'general';
+    let currentSelectedPoint = null;
+    let currentSelectedDrillpadFeature = null;
+    let selectedDrillpadLayer = null;
+    let drillholeDataMap = {};
+    let drillpadDataMap = {};
+    let geologyDataMap = {};
+    let assayDataMap = {};
+    let siDataMap = {};
+    let dailyTotalsRows = [];
+    let selectedDailyTotalsDate = '';
+
+    
+
+    const basemapOptions = {
+      'OpenStreetMap': {
+        url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        attribution: '&copy; OpenStreetMap contributors',
+        maxZoom: 24,
+        maxNativeZoom: 19,
+      },
+      'OpenStreetMap HOT': {
+        url: 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
+        attribution: '&copy; OpenStreetMap contributors, Tiles style by HOT',
+        maxZoom: 24,
+        maxNativeZoom: 19,
+      },
+      'CartoDB Positron': {
+        url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+        attribution: '&copy; CartoDB &copy; OpenStreetMap contributors',
+        maxZoom: 24,
+        maxNativeZoom: 19,
+      },
+      'CartoDB Voyager': {
+        url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+        attribution: '&copy; CartoDB &copy; OpenStreetMap contributors',
+        maxZoom: 24,
+        maxNativeZoom: 19,
+      },
+      'CartoDB Dark Matter': {
+        url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+        attribution: '&copy; CartoDB &copy; OpenStreetMap contributors',
+        maxZoom: 24,
+        maxNativeZoom: 19,
+      },
+      'Esri World Imagery': {
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
+        maxZoom: 24,
+        maxNativeZoom: 19,
+      },
+      'Stamen Terrain': {
+        url: 'https://stamen-tiles.a.ssl.fastly.net/terrain/{z}/{x}/{y}.jpg',
+        attribution: 'Map tiles by Stamen Design, under CC BY 3.0. Data by OpenStreetMap, under ODbL.',
+        maxZoom: 24,
+        maxNativeZoom: 18,
+      },
+      'Stamen Toner Lite': {
+        url: 'https://stamen-tiles.a.ssl.fastly.net/toner-lite/{z}/{x}/{y}.png',
+        attribution: 'Map tiles by Stamen Design, under CC BY 3.0. Data by OpenStreetMap, under ODbL.',
+        maxZoom: 24,
+        maxNativeZoom: 20,
+      },
+      'OpenTopoMap': {
+        url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+        attribution: 'Map data: &copy; OpenStreetMap contributors, SRTM | Map style: &copy; OpenTopoMap (CC-BY-SA)',
+        maxZoom: 24,
+        maxNativeZoom: 17,
+      },
+    };
+
+    function getTileLayer(key) {
+      const option = basemapOptions[key] || basemapOptions['Esri World Imagery'];
+      return L.tileLayer(option.url, {
+        attribution: option.attribution,
+        maxZoom: option.maxZoom || 24,
+        maxNativeZoom: option.maxNativeZoom || option.maxZoom || 19,
+      });
+    }
+
+    function normalizeCrsCode(value) {
+      const trimmed = (value || '').trim();
+      if (!trimmed) return 'EPSG:3857';
+      if (/^epsg:\s*(32[67]\d{2})$/i.test(trimmed)) {
+        return `EPSG:${trimmed.match(/32[67]\d{2}/i)[0]}`.toUpperCase();
+      }
+      const utmMatch = /^(?:utm\s*zone\s*)?(\d{1,2})([ns])?$/i.exec(trimmed);
+      if (utmMatch) {
+        const zone = String(parseInt(utmMatch[1], 10)).padStart(2, '0');
+        const hemisphere = (utmMatch[2] || 'n').toLowerCase() === 's' ? '327' : '326';
+        return `EPSG:${hemisphere}${zone}`;
+      }
+      if (/^\d{5}$/.test(trimmed)) return `EPSG:${trimmed}`;
+      if (/^\d{4}$/.test(trimmed)) return `EPSG:${trimmed}`;
+      return trimmed;
+    }
+
+    function getCrsForCode(code) {
+      const normalized = normalizeCrsCode(code);
+      if (normalized === 'EPSG:3857') return L.CRS.EPSG3857;
+      if (normalized === 'EPSG:4326') return L.CRS.EPSG4326;
+      if (typeof proj4 !== 'undefined' && typeof L.Proj !== 'undefined' && proj4.defs(normalized)) {
+        return new L.Proj.CRS(normalized, proj4.defs(normalized), {
+          resolutions: [4096, 2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1, 0.5, 0.25, 0.125],
+          origin: [0, 0],
+          bounds: L.bounds([-10000000, -10000000], [10000000, 10000000]),
+        });
+      }
+      return L.CRS.Simple;
+    }
+
+    function applyBaseLayer() {
+      if (currentBaseLayer && map) {
+        map.removeLayer(currentBaseLayer);
+      }
+      currentBaseLayer = null;
+      if (!map) return;
+      currentBaseLayer = getTileLayer(currentBaseKey).addTo(map);
+    }
+
+    function initMap() {
+      completedPulseIntervals.forEach((intervalId) => window.clearInterval(intervalId));
+      completedPulseIntervals = [];
+
+      if (map) {
+        map.remove();
+      }
+
+      map = L.map(mapElement, {
+        crs: L.CRS.EPSG3857,
+        minZoom: 2,
+        maxZoom: 24,
+        zoomControl: true,
+      });
+      map.createPane('drillpadPane');
+      map.getPane('drillpadPane').style.zIndex = '590';
+      markerGroup = L.layerGroup().addTo(map);
+      if (loadedShapeGeoJson) {
+        renderShapeLayer(loadedShapeGeoJson, false);
+      }
+      if (loadedTenementGeoJson) {
+        renderTenementLayer(loadedTenementGeoJson, false);
+      }
+      applyBaseLayer();
+    }
+
+    function toFeatureCollection(source) {
+      if (!source) return null;
+      if (Array.isArray(source)) {
+        const features = source
+          .filter((item) => item && (item.type === 'FeatureCollection' || item.type === 'Feature'))
+          .flatMap((item) => (item.type === 'FeatureCollection' ? (item.features || []) : [item]));
+        return { type: 'FeatureCollection', features };
+      }
+      if (source.type === 'FeatureCollection') {
+        return { type: 'FeatureCollection', features: source.features || [] };
+      }
+      if (source.type === 'Feature') {
+        return { type: 'FeatureCollection', features: [source] };
+      }
+      return null;
+    }
+
+    function normalizeCoordinatePair(pair) {
+      if (!Array.isArray(pair) || pair.length < 2) return pair;
+      const x = parseNumber(pair[0]);
+      const y = parseNumber(pair[1]);
+      if (Number.isNaN(x) || Number.isNaN(y)) return pair;
+
+      const looksGeographic = Math.abs(y) <= 90 && Math.abs(x) <= 180;
+      if (looksGeographic) return pair;
+
+      const projectedLatLng = projectToMapCoordinates(x, y, currentCrsCode);
+      if (!Array.isArray(projectedLatLng) || projectedLatLng.length < 2) return pair;
+      return [projectedLatLng[1], projectedLatLng[0], ...pair.slice(2)];
+    }
+
+    function normalizeCoordinatesRecursive(coords) {
+      if (!Array.isArray(coords) || !coords.length) return coords;
+      if (typeof coords[0] === 'number') {
+        return normalizeCoordinatePair(coords);
+      }
+      return coords.map((entry) => normalizeCoordinatesRecursive(entry));
+    }
+
+    function normalizeFeatureCollectionCoordinates(featureCollection) {
+      if (!featureCollection || !Array.isArray(featureCollection.features)) return featureCollection;
+      return {
+        type: 'FeatureCollection',
+        features: featureCollection.features.map((feature) => {
+          if (!feature || !feature.geometry || !Array.isArray(feature.geometry.coordinates)) {
+            return feature;
+          }
+          return {
+            ...feature,
+            geometry: {
+              ...feature.geometry,
+              coordinates: normalizeCoordinatesRecursive(feature.geometry.coordinates),
+            },
+          };
+        }),
+      };
+    }
+
+    function zoomToBounds(bounds) {
+      if (!map || !bounds || !bounds.isValid()) return;
+      const southWest = bounds.getSouthWest();
+      const northEast = bounds.getNorthEast();
+      const samePoint =
+        Math.abs(southWest.lat - northEast.lat) < 1e-9 &&
+        Math.abs(southWest.lng - northEast.lng) < 1e-9;
+
+      if (samePoint) {
+        map.setView([southWest.lat, southWest.lng], Math.max(map.getZoom(), 16));
+        return;
+      }
+
+      map.fitBounds(bounds, { padding: [30, 30] });
+    }
+
+    const drillpadActionColors = {
+      'built': '#5CB85C',
+      'building': '#3498DB',
+      'old - pending approval': '#E67E22',
+      'new': '#F1C40F',
+    };
+
+    function normalizeDrillpadAction(rawAction) {
+      return String(rawAction ?? '')
+        .trim()
+        .toLowerCase()
+        .replace(/\s*-\s*/g, ' - ')
+        .replace(/\s+/g, ' ');
+    }
+
+    function getDrillpadActionColor(feature) {
+      const properties = feature?.properties || {};
+      const rawAction = properties.Status ?? properties.status ?? properties.STATUS ?? properties.Action ?? properties.action ?? properties.ACTION ?? '';
+      const normalized = normalizeDrillpadAction(rawAction);
+      return drillpadActionColors[normalized] || '#7FDBFF';
+    }
+
+    function getDrillpadLayerStyle(feature, isSelected = false) {
+      const actionColor = getDrillpadActionColor(feature);
+      const geometryType = feature?.geometry?.type || '';
+
+      if (geometryType.includes('Polygon')) {
+        return {
+          pane: 'drillpadPane',
+          color: actionColor,
+          weight: isSelected ? 3 : 2,
+          opacity: 0.95,
+          fillColor: actionColor,
+          fillOpacity: isSelected ? 0.28 : 0.18,
+        };
+      }
+
+      if (geometryType.includes('Point')) {
+        return {
+          pane: 'drillpadPane',
+          radius: isSelected ? 7 : 5,
+          color: actionColor,
+          weight: isSelected ? 3 : 2,
+          fillColor: actionColor,
+          fillOpacity: isSelected ? 0.75 : 0.5,
+        };
+      }
+
+      return {
+        pane: 'drillpadPane',
+        color: actionColor,
+        weight: isSelected ? 3 : 2,
+        opacity: 0.95,
+      };
+    }
+
+    function clearSelectedDrillpadLayer() {
+      if (!selectedDrillpadLayer || typeof selectedDrillpadLayer.setStyle !== 'function') {
+        selectedDrillpadLayer = null;
+        return;
+      }
+
+      selectedDrillpadLayer.setStyle(getDrillpadLayerStyle(selectedDrillpadLayer.feature, false));
+      selectedDrillpadLayer = null;
+    }
+
+    function highlightDrillpadLayer(layer) {
+      if (!layer || typeof layer.setStyle !== 'function') return;
+
+      if (selectedDrillpadLayer && selectedDrillpadLayer !== layer) {
+        selectedDrillpadLayer.setStyle(getDrillpadLayerStyle(selectedDrillpadLayer.feature, false));
+      }
+
+      layer.setStyle(getDrillpadLayerStyle(layer.feature, true));
+      if (typeof layer.bringToFront === 'function') {
+        layer.bringToFront();
+      }
+      selectedDrillpadLayer = layer;
+    }
+
+    function syncSelectedDrillpadLayer(feature) {
+      if (!shapefileLayer || !feature) {
+        clearSelectedDrillpadLayer();
+        return;
+      }
+
+      let matchedLayer = null;
+      const targetPadId = getDrillpadFeatureId(feature);
+      shapefileLayer.eachLayer((layer) => {
+        if (matchedLayer || !layer.feature) return;
+        if (layer.feature === feature) {
+          matchedLayer = layer;
+          return;
+        }
+
+        if (!targetPadId) return;
+        if (getDrillpadFeatureId(layer.feature) === targetPadId) {
+          matchedLayer = layer;
+        }
+      });
+
+      if (matchedLayer) {
+        highlightDrillpadLayer(matchedLayer);
+      } else {
+        clearSelectedDrillpadLayer();
+      }
+    }
+
+    function renderShapeLayer(featureCollection, fitToLayer = true) {
+      if (!map || !featureCollection) return;
+      if (shapefileLayer) {
+        map.removeLayer(shapefileLayer);
+      }
+      selectedDrillpadLayer = null;
+
+      shapefileLayer = L.geoJSON(featureCollection, {
+        style: (feature) => getDrillpadLayerStyle(feature, false),
+        pointToLayer: (feature, latlng) => L.circleMarker(latlng, getDrillpadLayerStyle(feature, false)),
+        onEachFeature: (feature, layer) => {
+          layer.on('click', () => {
+            currentSelectedDrillpadFeature = feature || null;
+            currentSelectedPoint = null;
+            highlightDrillpadLayer(layer);
+            setDetailsTab('drillpad');
+            renderDrillpadDetailsFromFeature(currentSelectedDrillpadFeature);
+            messages.textContent = 'Drillpad feature selected from shapefile.';
+          });
+        },
+      }).addTo(map);
+
+      if (fitToLayer) {
+        const bounds = shapefileLayer.getBounds();
+        zoomToBounds(bounds);
+      }
+    }
+
+    function renderTenementLayer(featureCollection, fitToLayer = true) {
+      if (!map || !featureCollection) return;
+      if (tenementLayer) {
+        map.removeLayer(tenementLayer);
+      }
+
+      tenementLayer = L.geoJSON(featureCollection, {
+        style: (feature) => {
+          const geometryType = feature?.geometry?.type || '';
+          if (geometryType.includes('Polygon')) {
+            return {
+              color: '#FFFFFF',
+              weight: 2,
+              opacity: 0.95,
+              fillColor: '#FFFFFF',
+              fillOpacity: 0.08,
+            };
+          }
+          return {
+            color: '#FFFFFF',
+            weight: 2,
+            opacity: 0.95,
+          };
+        },
+        pointToLayer: (_feature, latlng) => {
+          return L.circleMarker(latlng, {
+            radius: 4,
+            color: '#FFFFFF',
+            weight: 2,
+            fillColor: '#FFFFFF',
+            fillOpacity: 0.35,
+          });
+        },
+      }).addTo(map);
+
+      if (fitToLayer) {
+        const bounds = tenementLayer.getBounds();
+        zoomToBounds(bounds);
+      }
+    }
+
+    function normalizeStatusValue(value) {
+      const normalized = String(value ?? '').trim().toLowerCase();
+      if (!normalized) return 'active';
+      if (normalized.includes('complete') || normalized.includes('done') || normalized.includes('finish')) return 'completed';
+      if (normalized.includes('plan')) return 'planned';
+      return 'active';
+    }
+
+    function getStatusColor(status) {
+      if (status === 'completed') return '#43331C';
+      if (status === 'planned') return '#A0A678';
+      return '#8B8A44';
+    }
+
+    function getStatusLabel(status) {
+      if (status === 'completed') return 'Completed';
+      if (status === 'planned') return 'Planned';
+      return 'Active';
+    }
+
+    function utmToLatLng(easting, northing, code) {
+      const match = /^EPSG:(32[67])(\d{2})$/i.exec(normalizeCrsCode(code));
+      if (!match) return null;
+
+      const hemisphere = match[1] === '327' ? 'south' : 'north';
+      const zoneNumber = parseInt(match[2], 10);
+      const a = 6378137.0;
+      const f = 1 / 298.257223563;
+      const e2 = f * (2 - f);
+      const e1 = (1 - Math.sqrt(1 - e2)) / (1 + Math.sqrt(1 - e2));
+      const k0 = 0.9996;
+      const x = easting - 500000;
+      const y = hemisphere === 'south' ? northing - 10000000 : northing;
+      const M = y / k0;
+      const mu = M / (a * (1 - e2 / 4 - 3 * e2 * e2 / 64 - 5 * e2 * e2 * e2 / 256));
+      const phi1 = mu
+        + (3 * e1 / 2 - 27 * Math.pow(e1, 3) / 32) * Math.sin(2 * mu)
+        + (21 * e1 * e1 / 16 - 55 * Math.pow(e1, 4) / 32) * Math.sin(4 * mu)
+        + (151 * e1 * e1 * e1 / 96) * Math.sin(6 * mu);
+
+      const C1 = e2 / (1 - e2) * Math.pow(Math.cos(phi1), 2);
+      const T1 = Math.pow(Math.tan(phi1), 2);
+      const N1 = a / Math.sqrt(1 - e2 * Math.pow(Math.sin(phi1), 2));
+      const R1 = a * (1 - e2) / Math.pow(1 - e2 * Math.pow(Math.sin(phi1), 2), 1.5);
+      const D = x / (N1 * k0);
+
+      const latRad = phi1 - (N1 * Math.tan(phi1) / R1) * (
+        D * D / 2
+        - (5 + 3 * T1 + 10 * C1 - 4 * C1 * C1 - 9 * e2 / (1 - e2)) * Math.pow(D, 4) / 24
+        + (61 + 90 * T1 + 298 * C1 + 45 * T1 * T1 - 252 * e2 / (1 - e2) - 3 * C1 * C1) * Math.pow(D, 6) / 720
+      );
+      const lonRad = (D
+        - (1 + 2 * T1 + C1) * Math.pow(D, 3) / 6
+        + (5 - 2 * C1 + 28 * T1 - 3 * C1 * C1 + 8 * e2 / (1 - e2) + 24 * T1 * T1) * Math.pow(D, 5) / 120
+      ) / Math.cos(phi1);
+
+      const lonDeg = (lonRad * 180 / Math.PI) + (zoneNumber * 6 - 183);
+      const latDeg = latRad * 180 / Math.PI;
+      return { lat: latDeg, lng: lonDeg };
+    }
+
+    function projectToMapCoordinates(easting, northing, code) {
+      const normalized = normalizeCrsCode(code);
+      if (normalized === 'EPSG:4326') {
+        return [northing, easting];
+      }
+      if (normalized === 'EPSG:3857') {
+        if (typeof proj4 !== 'undefined') {
+          const projected = proj4('EPSG:3857', 'EPSG:4326', [easting, northing]);
+          return [projected[1], projected[0]];
+        }
+        return [northing, easting];
+      }
+      if (typeof proj4 !== 'undefined' && proj4.defs(normalized)) {
+        const projected = proj4(normalized, 'EPSG:4326', [easting, northing]);
+        return [projected[1], projected[0]];
+      }
+      const fallback = utmToLatLng(easting, northing, normalized);
+      return fallback ? [fallback.lat, fallback.lng] : [northing, easting];
+    }
+
+    function updateDrillholeDropdown(points) {
+      drillholeSelect.innerHTML = '<option value="">Choose drillhole</option>';
+      points.forEach((point) => {
+        const option = document.createElement('option');
+        option.value = point.id;
+        option.textContent = point.drillholeLabel;
+        drillholeSelect.appendChild(option);
+      });
+    }
+
+    function getOverlappingPoints(point) {
+      if (!point || !point.mapLatLng || !drillholePoints.length) return [];
+      const [lat, lng] = point.mapLatLng;
+      return drillholePoints.filter((candidate) => {
+        if (candidate.id === point.id || !candidate.mapLatLng) return false;
+        const [candidateLat, candidateLng] = candidate.mapLatLng;
+        return Math.abs(candidateLat - lat) < 1e-9 && Math.abs(candidateLng - lng) < 1e-9;
+      });
+    }
+
+    function getPointTooltipContent(point) {
+      const overlaps = getOverlappingPoints(point);
+      if (!overlaps.length) {
+        return `<strong>${point.drillholeLabel}</strong><br>Status: ${point.statusValue || 'Unknown'}`;
+      }
+      const labels = [point, ...overlaps]
+        .map((item) => `• ${item.drillholeLabel} (${item.statusValue || 'Unknown'})`)
+        .join('<br>');
+      return `<strong>Overlapping drillholes</strong><br>${labels}`;
+    }
+
+    function createOverlapPopupContent(point, marker) {
+      const overlaps = getOverlappingPoints(point);
+      const container = document.createElement('div');
+      container.className = 'overlap-popup';
+
+      const title = document.createElement('div');
+      title.className = 'overlap-popup-title';
+      title.textContent = 'Choose a drillhole';
+      container.appendChild(title);
+
+      const list = document.createElement('div');
+      list.className = 'overlap-popup-list';
+      [point, ...overlaps].forEach((candidate) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'overlap-popup-button';
+        button.textContent = candidate.drillholeLabel;
+        button.addEventListener('click', (event) => {
+          event.stopPropagation();
+          zoomToDrillhole(candidate);
+          marker.closePopup();
+        });
+        list.appendChild(button);
+      });
+      container.appendChild(list);
+      return container;
+    }
+
+    function applyCompletedMarkerEffect(marker, point) {
+      if (!marker || !point) return;
+
+      const haloMarker = L.circleMarker(point.mapLatLng, {
+        radius: 10,
+        color: 'rgba(255,255,255,0)',
+        weight: 0,
+        fillColor: '#ffffff',
+        fillOpacity: 0.3,
+        interactive: false,
+        pane: 'markerPane',
+      });
+      haloMarker.addTo(markerGroup);
+      point.haloMarker = haloMarker;
+
+      const pulseInterval = window.setInterval(() => {
+        if (!haloMarker || !map) return;
+        const phase = Date.now() / 1000;
+        const pulseRadius = 10 + Math.sin(phase * 3.2) * 3.5;
+        const pulseOpacity = 0.16 + Math.sin(phase * 3.2) * 0.12;
+        haloMarker.setStyle({
+          radius: pulseRadius,
+          fillOpacity: pulseOpacity,
+        });
+      }, 80);
+      completedPulseIntervals.push(pulseInterval);
+    }
+
+    function highlightMarker(marker) {
+      if (selectedMarker && selectedMarker !== marker) {
+        applyMarkerVisualState(selectedMarker, false);
+      }
+      applyMarkerVisualState(marker, true);
+      selectedMarker = marker;
+    }
+
+    function zoomToDrillhole(point) {
+      if (!map || !point || !point.marker) return;
+      highlightMarker(point.marker);
+      currentSelectedPoint = point;
+      currentSelectedDrillpadFeature = null;
+      if (Array.isArray(point.mapLatLng)) {
+        const targetZoom = Math.max(map.getZoom(), 21);
+        map.flyTo(point.mapLatLng, targetZoom, { animate: true, duration: 0.75 });
+      }
+      if (currentDetailsTab !== 'drillhole') {
+        setDetailsTab('drillhole');
+        return;
+      }
+      updateDetails(point);
+    }
+
+    function renderStatusGroup(pieEl, listEl, points, emptyMessage) {
+      if (!pieEl || !listEl) return;
+
+      const completed = points.filter((point) => point.status === 'completed').length;
+      const active = points.filter((point) => point.status === 'active').length;
+      const total = completed + active;
+
+      if (!total) {
+        pieEl.style.background = 'conic-gradient(#43331C 0deg 0deg, #A0A678 0deg 360deg)';
+        const message = points.length ? 'All holes of this type are still planned.' : emptyMessage;
+        listEl.innerHTML = `<div class="panel-note">${message}</div>`;
+        return;
+      }
+
+      const completedAngle = (completed / total) * 360;
+      const completedPct = Math.round((completed / total) * 100);
+      const activePct = 100 - completedPct;
+      const completedColor = getStatusColor('completed');
+      const activeColor = getStatusColor('active');
+
+      pieEl.style.background = `conic-gradient(${completedColor} 0deg ${completedAngle}deg, ${activeColor} ${completedAngle}deg 360deg)`;
+      listEl.innerHTML = `
+        <div class="status-summary-item">
+          <span class="status-summary-label"><span class="status-dot status-dot-complete"></span>Completed</span>
+          <strong class="status-summary-count">${completed}</strong>
+          <span class="status-summary-pct">(${completedPct}%)</span>
+        </div>
+        <div class="status-summary-item">
+          <span class="status-summary-label"><span class="status-dot status-dot-active"></span>Active</span>
+          <strong class="status-summary-count">${active}</strong>
+          <span class="status-summary-pct">(${activePct}%)</span>
+        </div>
+      `;
+    }
+
+    function updatePlannedTotal(points) {
+      if (!statusPlannedTotalCount) return;
+      if (!points.length) {
+        statusPlannedTotalCount.textContent = '–';
+        return;
+      }
+      const planned = points.filter((point) => point.status === 'planned').length;
+      statusPlannedTotalCount.textContent = String(planned);
+    }
+
+    function updateStatusSummary() {
+      if (!statusPieChart || !statusSummaryContent) return;
+      if (statusCardTitle) {
+        statusCardTitle.textContent = currentDetailsTab === 'drillpad' ? 'Drillpad Status' : 'Status';
+      }
+      if (statusSidebarCard) {
+        statusSidebarCard.style.display = currentDetailsTab === 'drillhole' ? 'none' : '';
+      }
+      if (currentDetailsTab === 'drillhole') return;
+
+      if (currentDetailsTab === 'drillpad') {
+        if (drillholeStatusGroups) drillholeStatusGroups.style.display = 'none';
+        if (drillpadStatusGroup) drillpadStatusGroup.style.display = '';
+        if (drillholeLegends) drillholeLegends.style.display = 'none';
+        if (statusFilterControls) statusFilterControls.style.display = 'none';
+        const features = (loadedShapeGeoJson && Array.isArray(loadedShapeGeoJson.features)) ? loadedShapeGeoJson.features : [];
+        if (!features.length) {
+          statusPieChart.style.background = 'conic-gradient(#6B7280 0deg 0deg, #A0A678 0deg 360deg)';
+          statusSummaryContent.innerHTML = '<div class="panel-note">Load a drillpad shapefile to view Built, Building, Old - Pending Approval, and New totals.</div>';
+          return;
+        }
+
+        const tally = { built: 0, building: 0, pending: 0, new: 0, other: 0 };
+        features.forEach((feature) => {
+          const rawAction = feature?.properties?.Status ?? feature?.properties?.status ?? feature?.properties?.STATUS ?? feature?.properties?.Action ?? feature?.properties?.action ?? feature?.properties?.ACTION ?? '';
+          const normalized = normalizeDrillpadAction(rawAction);
+          if (normalized === 'built') tally.built += 1;
+          else if (normalized === 'building') tally.building += 1;
+          else if (normalized === 'old - pending approval') tally.pending += 1;
+          else if (normalized === 'new') tally.new += 1;
+          else tally.other += 1;
+        });
+
+        const total = tally.built + tally.building + tally.pending + tally.new + tally.other;
+        if (!total) {
+          statusPieChart.style.background = 'conic-gradient(#6B7280 0deg 0deg, #A0A678 0deg 360deg)';
+          statusSummaryContent.innerHTML = '<div class="panel-note">No drillpad Action values were found in the loaded shapefile.</div>';
+          return;
+        }
+
+        const builtAngle = (tally.built / total) * 360;
+        const buildingAngle = ((tally.built + tally.building) / total) * 360;
+        const pendingAngle = ((tally.built + tally.building + tally.pending) / total) * 360;
+        const newAngle = ((tally.built + tally.building + tally.pending + tally.new) / total) * 360;
+        const builtPct = Math.round((tally.built / total) * 100);
+        const buildingPct = Math.round((tally.building / total) * 100);
+        const pendingPct = Math.round((tally.pending / total) * 100);
+        const newPct = Math.round((tally.new / total) * 100);
+        const otherPct = 100 - builtPct - buildingPct - pendingPct - newPct;
+
+        statusPieChart.style.background = `conic-gradient(#5CB85C 0deg ${builtAngle}deg, #3498DB ${builtAngle}deg ${buildingAngle}deg, #E67E22 ${buildingAngle}deg ${pendingAngle}deg, #F1C40F ${pendingAngle}deg ${newAngle}deg, #6B7280 ${newAngle}deg 360deg)`;
+        statusSummaryContent.innerHTML = `
+          <div class="status-summary-item">
+            <span class="status-summary-label"><span class="status-dot" style="background:#5CB85C"></span>Built</span>
+            <strong class="status-summary-count">${tally.built}</strong>
+            <span class="status-summary-pct">(${builtPct}%)</span>
+          </div>
+          <div class="status-summary-item">
+            <span class="status-summary-label"><span class="status-dot" style="background:#3498DB"></span>Building</span>
+            <strong class="status-summary-count">${tally.building}</strong>
+            <span class="status-summary-pct">(${buildingPct}%)</span>
+          </div>
+          <div class="status-summary-item">
+            <span class="status-summary-label"><span class="status-dot" style="background:#E67E22"></span>Old - Pending Approval</span>
+            <strong class="status-summary-count">${tally.pending}</strong>
+            <span class="status-summary-pct">(${pendingPct}%)</span>
+          </div>
+          <div class="status-summary-item">
+            <span class="status-summary-label"><span class="status-dot" style="background:#F1C40F"></span>New</span>
+            <strong class="status-summary-count">${tally.new}</strong>
+            <span class="status-summary-pct">(${newPct}%)</span>
+          </div>
+          ${tally.other ? `<div class="status-summary-item"><span class="status-summary-label"><span class="status-dot" style="background:#6B7280"></span>Other</span><strong class="status-summary-count">${tally.other}</strong><span class="status-summary-pct">(${otherPct}%)</span></div>` : ''}
+        `;
+        return;
+      }
+
+      if (drillpadStatusGroup) drillpadStatusGroup.style.display = 'none';
+      if (drillholeStatusGroups) drillholeStatusGroups.style.display = '';
+      if (drillholeLegends) drillholeLegends.style.display = '';
+      if (statusFilterControls) statusFilterControls.style.display = '';
+
+      const points = drillholePoints || [];
+      const rcPoints = points.filter((point) => point.category === 'RC');
+      const ddPoints = points.filter((point) => point.category === 'DD');
+      const emptyMessage = points.length
+        ? 'No holes of this type found.'
+        : 'Load a workbook to view completion totals.';
+
+      renderStatusGroup(statusPieChartRC, statusSummaryContentRC, rcPoints, emptyMessage);
+      renderStatusGroup(statusPieChartDD, statusSummaryContentDD, ddPoints, emptyMessage);
+      updatePlannedTotal(points);
+    }
+
+    function applyStatusFilter() {
+      if (!markerGroup) return;
+
+      const filteredPoints = drillholePoints.filter((point) => {
+        return currentStatusFilter === 'all' || point.status === currentStatusFilter;
+      });
+
+      drillholePoints.forEach((point) => {
+        const shouldShow = currentStatusFilter === 'all' || point.status === currentStatusFilter;
+        if (shouldShow) {
+          if (!markerGroup.hasLayer(point.marker)) {
+            markerGroup.addLayer(point.marker);
+          }
+          if (point.haloMarker && !markerGroup.hasLayer(point.haloMarker)) {
+            markerGroup.addLayer(point.haloMarker);
+          }
+        } else {
+          if (point.marker && markerGroup.hasLayer(point.marker)) {
+            markerGroup.removeLayer(point.marker);
+          }
+          if (point.haloMarker && markerGroup.hasLayer(point.haloMarker)) {
+            markerGroup.removeLayer(point.haloMarker);
+          }
+        }
+      });
+
+      updateDrillholeDropdown(filteredPoints);
+
+      if (drillholeSelect.value) {
+        const selectedPoint = drillholePoints.find((point) => point.id === drillholeSelect.value);
+        if (selectedPoint && currentStatusFilter !== 'all' && selectedPoint.status !== currentStatusFilter) {
+          drillholeSelect.value = '';
+          selectedDetails.innerHTML = '<div class="panel-note">Current filter hides the selected drillhole. Choose one from the filtered list.</div>';
+        }
+      }
+    }
+
+    function updateGeometryMetricsTitle() {
+      if (geometryMetricsTitle) {
+        geometryMetricsTitle.textContent = currentDetailsTab === 'general'
+          ? 'Geometry metrics for Completed Holes (ft)'
+          : 'Geometry metrics';
+      }
+    }
+
+    function findPeakAuKey(siRows) {
+      return (siRows || []).reduce((foundKey, siRow) => {
+        if (foundKey) return foundKey;
+        return Object.keys(siRow || {}).find((key) => String(key).toLowerCase().includes('peak au g/t')) || null;
+      }, null);
+    }
+
+    function countSignificantIntercepts(siRows) {
+      if (!Array.isArray(siRows) || !siRows.length) return 0;
+      const peakAuKey = findPeakAuKey(siRows);
+      return peakAuKey
+        ? siRows.filter((siRow) => String(siRow[peakAuKey] ?? '').trim() !== '').length
+        : siRows.length;
+    }
+
+    function updateAssayCoverageNote() {
+      if (!assayCoverageNote) return;
+      if (currentDetailsTab !== 'drillhole' || currentTopLevelTab !== 'assay' || !Array.isArray(drillholePoints) || !drillholePoints.length) {
+        assayCoverageNote.style.display = 'none';
+        return;
+      }
+      const total = drillholePoints.length;
+      const holesWithAssay = drillholePoints
+        .filter((point) => Array.isArray(siDataMap[point.drillholeId]) && siDataMap[point.drillholeId].length > 0)
+        .sort((a, b) => String(a.drillholeLabel).localeCompare(String(b.drillholeLabel), undefined, { numeric: true }));
+
+      assayCoverageText.innerHTML = `<strong>${holesWithAssay.length} of ${total}</strong> drillholes have available assay data.`;
+
+      if (holesWithAssay.length) {
+        assayCoverageList.innerHTML = holesWithAssay.map((point) => {
+          const count = countSignificantIntercepts(siDataMap[point.drillholeId]);
+          return `
+            <button type="button" class="assay-coverage-hole" data-drillhole-id="${point.id}">
+              <span>${formatValue(point.drillholeLabel)}</span>
+              <span class="assay-coverage-hole-count">${count} intercept${count === 1 ? '' : 's'}</span>
+            </button>
+          `;
+        }).join('');
+      } else {
+        assayCoverageList.innerHTML = '';
+      }
+
+      assayCoverageNote.style.display = 'block';
+    }
+
+    function renderTopLevelEmptyState() {
+      const messagesByTab = {
+        geology: 'Click a point on the map or choose a drillhole to view geology records for that drillhole.',
+        assay: 'Click a point on the map or choose a drillhole to view assay and significant intercept results.',
+        survey: 'Click a point on the map or choose a drillhole to view survey parameters and DLS records.',
+      };
+      selectedDetails.innerHTML = `<div class="panel-note">${messagesByTab[currentTopLevelTab] || messagesByTab.survey}</div>`;
+    }
+
+    function setDetailsTab(tabName) {
+      if (tabName === 'drillpad') {
+        currentDetailsTab = 'drillpad';
+      } else if (tabName === 'general') {
+        currentDetailsTab = 'general';
+      } else {
+        currentDetailsTab = 'drillhole';
+      }
+
+      updateGeometryMetricsTitle();
+      selectedDetails.classList.toggle('is-active', currentDetailsTab === 'drillhole');
+      selectedGeneralDetails.classList.toggle('is-active', currentDetailsTab === 'general');
+      selectedSurveyDetails.classList.toggle('is-active', false);
+      selectedGeologyDetails.classList.toggle('is-active', false);
+      selectedAssayDetails.classList.toggle('is-active', false);
+      selectedPadDetails.classList.toggle('is-active', currentDetailsTab === 'drillpad');
+      selectedDetails.style.display = currentDetailsTab === 'drillhole' ? 'grid' : 'none';
+      selectedGeneralDetails.style.display = currentDetailsTab === 'general' ? 'grid' : 'none';
+      selectedSurveyDetails.style.display = 'none';
+      selectedGeologyDetails.style.display = 'none';
+      selectedAssayDetails.style.display = 'none';
+      selectedPadDetails.style.display = currentDetailsTab === 'drillpad' ? 'grid' : 'none';
+      drillpadActionLegend.classList.toggle('is-active', currentDetailsTab === 'drillpad');
+      detailsTabs.querySelectorAll('.details-tab').forEach((tabButton) => {
+        tabButton.classList.toggle('is-active', tabButton.dataset.tab === currentDetailsTab);
+      });
+      topLevelTabs.querySelectorAll('.details-tab').forEach((tabButton) => {
+        tabButton.classList.toggle('is-active', currentDetailsTab === 'drillpad'
+          ? false
+          : currentDetailsTab === 'general'
+            ? tabButton.dataset.topTab === 'general'
+            : tabButton.dataset.topTab === currentTopLevelTab);
+      });
+      updateAssayCoverageNote();
+      updateStatusSummary();
+      if (currentDetailsTab === 'drillpad' && currentSelectedDrillpadFeature) {
+        syncSelectedDrillpadLayer(currentSelectedDrillpadFeature);
+        renderDrillpadDetailsFromFeature(currentSelectedDrillpadFeature);
+      } else if (currentDetailsTab === 'general') {
+        clearSelectedDrillpadLayer();
+        renderGeneralDetails();
+      } else if (currentSelectedPoint) {
+        clearSelectedDrillpadLayer();
+        updateDetails(currentSelectedPoint);
+      } else {
+        clearSelectedDrillpadLayer();
+        if (currentDetailsTab === 'drillhole') {
+          renderTopLevelEmptyState();
+        }
+      }
+    }
+
+    function setTopLevelTab(tabName) {
+      if (tabName === 'general') {
+        setDetailsTab('general');
+        return;
+      }
+
+      currentTopLevelTab = tabName === 'geology' ? 'geology' : tabName === 'assay' ? 'assay' : 'survey';
+      topLevelTabs.querySelectorAll('.details-tab').forEach((tabButton) => {
+        tabButton.classList.toggle('is-active', tabButton.dataset.topTab === currentTopLevelTab);
+      });
+      updateAssayCoverageNote();
+      if (currentTopLevelTab === 'geology') {
+        syncGeologyFromWorkbook();
+      }
+      if (currentDetailsTab !== 'drillhole') {
+        setDetailsTab('drillhole');
+      } else if (currentSelectedPoint) {
+        updateDetails(currentSelectedPoint);
+      } else {
+        renderTopLevelEmptyState();
+      }
+    }
+
+    function getCompletedActualDepthValues(category, cutoffDate) {
+      if (!Array.isArray(drillholePoints) || !drillholePoints.length) return [];
+      const sampleRow = drillholePoints[0].row;
+      const finalDepthActualKey = findKey(sampleRow, ['final depth (actual)', 'final_depth_actual', 'final depth actual']);
+      if (!finalDepthActualKey) return [];
+      const endDateKey = findKey(sampleRow, ['end date', 'end_date', 'enddate']);
+      return drillholePoints
+        .filter((point) => {
+          if (point.status !== 'completed') return false;
+          if (category && point.category !== category) return false;
+          if (cutoffDate && endDateKey) {
+            const endDateValue = normalizeDateValue(point.row[endDateKey]);
+            if (!endDateValue || endDateValue > cutoffDate) return false;
+          }
+          return true;
+        })
+        .map((point) => parseNumber(point.row[finalDepthActualKey]))
+        .filter((value) => !Number.isNaN(value));
+    }
+
+    function getDrillholeEndDateOptions() {
+      if (!Array.isArray(drillholePoints) || !drillholePoints.length) return [];
+      const endDateKey = findKey(drillholePoints[0].row, ['end date', 'end_date', 'enddate']);
+      if (!endDateKey) return [];
+      const discoveredDates = drillholePoints
+        .map((point) => normalizeDateValue(point.row[endDateKey]))
+        .filter((value) => value && value !== 'Invalid Date');
+      if (!discoveredDates.length) return [];
+      const uniqueDates = [...new Set(discoveredDates)].sort((a, b) => new Date(a) - new Date(b));
+      const start = new Date(`${uniqueDates[0]}T00:00:00`);
+      const end = new Date(`${uniqueDates[uniqueDates.length - 1]}T00:00:00`);
+      const allDates = [];
+      const current = new Date(start);
+      while (current <= end) {
+        allDates.push(formatDateKey(current));
+        current.setDate(current.getDate() + 1);
+      }
+      return allDates;
+    }
+
+    function buildDepthSummarySection(label, completedDepths) {
+      const body = completedDepths.length ? (() => {
+        const totalMeterage = completedDepths.reduce((sum, depth) => sum + depth, 0);
+        const minimumDepth = Math.min(...completedDepths);
+        const maximumDepth = Math.max(...completedDepths);
+        const averageDepth = totalMeterage / completedDepths.length;
+        return `
+          <div class="depth-summary-rows">
+            <div class="detail-row depth-summary-row">
+              <strong>Completed Depth Total</strong><span>${totalMeterage.toFixed(2)}</span>
+            </div>
+            <div class="detail-row depth-summary-row">
+              <strong>Minimum Depth</strong><span>${minimumDepth.toFixed(2)}</span>
+            </div>
+            <div class="detail-row depth-summary-row">
+              <strong>Maximum Depth</strong><span>${maximumDepth.toFixed(2)}</span>
+            </div>
+            <div class="detail-row depth-summary-row">
+              <strong>Average Depth</strong><span>${averageDepth.toFixed(2)}</span>
+            </div>
+          </div>
+        `;
+      })() : '<div class="panel-note">No completed drillholes with actual depth values were found.</div>';
+
+      return `
+        <div class="status-subheading">${label}</div>
+        ${body}
+      `;
+    }
+
+    function updateGeneralDetailsPanel() {
+      selectedGeneralDetails.innerHTML = '';
+
+      if (!drillholePoints.length) {
+        selectedGeneralDetails.innerHTML = '<div class="panel-note">Load a workbook to view completed-hole depth metrics.</div>';
+        return;
+      }
+
+      const dailyTotalsSummary = getDailyTotalsSummaryForSelectedDate();
+      const footageDateOptions = dailyTotalsSummary.dateOptions.length
+        ? dailyTotalsSummary.dateOptions
+        : [];
+      const drillholeDateOptions = getDrillholeEndDateOptions();
+      const dateOptions = footageDateOptions.length ? footageDateOptions : drillholeDateOptions;
+
+      if (!selectedDailyTotalsDate && dateOptions.length) {
+        selectedDailyTotalsDate = getDefaultDailyTotalsDate(dateOptions);
+      }
+
+      const calendarCard = dateOptions.length ? `
+        <div class="detail-card">
+          <div class="status-subheading">Metrics Date</div>
+          <div class="panel-note">Depth metrics and footage totals below are cumulative from the start through the selected date.</div>
+          <div class="detail-row" style="display: block; margin-top: 8px; margin-bottom: 8px;">
+            <input
+              type="date"
+              id="dailyTotalsDateInput"
+              value="${selectedDailyTotalsDate || ''}"
+              ${dateOptions.length ? `min="${dateOptions[0]}" max="${dateOptions[dateOptions.length - 1]}"` : ''}
+              style="width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 12px; background: rgba(67, 51, 28, 0.18); border: 1px solid rgba(160, 166, 120, 0.25); font-weight: 700; text-align: center; color: #f5f8ff; font-size: 0.95rem; cursor: pointer; color-scheme: dark;"
+            />
+          </div>
+        </div>
+      ` : '';
+
+      const lastFootageDataDate = getLastFootageDataDate();
+      const lastFootageDataDisplay = lastFootageDataDate
+        ? new Date(`${lastFootageDataDate}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+        : '';
+
+      const geometryDateNote = lastFootageDataDisplay
+        ? `<div class="data-availability-note">Data available through ${lastFootageDataDisplay}</div>`
+        : '<div class="panel-note">No footage data available</div>';
+
+      const summaryCard = `
+        ${geometryDateNote}
+        <div class="detail-card depth-summary-card">
+          ${buildDepthSummarySection('RC (in ft)', getCompletedActualDepthValues('RC', selectedDailyTotalsDate))}
+          <div class="metric-divider" aria-hidden="true"></div>
+          ${buildDepthSummarySection('Core (in ft)', getCompletedActualDepthValues('DD', selectedDailyTotalsDate))}
+        </div>
+      `;
+
+      const totalFootageCard = footageDateOptions.length ? `
+        <div class="detail-card">
+          <div class="status-subheading">Total Footage</div>
+          <div class="panel-note">Includes footage from both completed and active drilling, cumulative through the selected date.</div>
+          <div class="detail-row">
+            <strong>Harris R-05</strong><span>${formatNumeric(dailyTotalsSummary.harrisFootage, 2)}</span>
+          </div>
+          <div class="detail-row">
+            <strong>Premier RC R3</strong><span>${formatNumeric(dailyTotalsSummary.premierRcFootage, 2)}</span>
+          </div>
+          <div class="detail-row">
+            <strong>Premier Core PKC-2</strong><span>${formatNumeric(dailyTotalsSummary.pkcFootage, 2)}</span>
+          </div>
+        </div>
+      ` : '';
+
+      selectedGeneralDetails.innerHTML = `${calendarCard}${summaryCard}${totalFootageCard}`;
+
+      const dateInput = document.getElementById('dailyTotalsDateInput');
+      if (dateInput) {
+        dateInput.addEventListener('change', () => {
+          if (!dateInput.value) return;
+          selectedDailyTotalsDate = dateInput.value;
+          updateGeneralDetailsPanel();
+        });
+      }
+    }
+
+    function renderGeneralDetails() {
+      selectedDetails.style.display = 'none';
+      selectedSurveyDetails.style.display = 'none';
+      selectedGeologyDetails.style.display = 'none';
+      selectedPadDetails.style.display = 'none';
+      selectedGeneralDetails.style.display = 'grid';
+      selectedDetails.innerHTML = '';
+      selectedSurveyDetails.innerHTML = '';
+      selectedGeologyDetails.innerHTML = '';
+      selectedPadDetails.innerHTML = '';
+      updateGeneralDetailsPanel();
+    }
+
+    function buildDrillpadData(padRows) {
+      drillpadDataMap = {};
+      (padRows || []).forEach((row, index) => {
+        const padKey = findKey(row, ['drillpad id', 'drillpad', 'pad id', 'padid', 'pad']);
+        const padId = normalizeDrillholeId(padKey ? row[padKey] : `DRILLPAD-${index + 1}`);
+        if (!padId) return;
+        drillpadDataMap[padId] = row;
+      });
+    }
+
+    function buildGeologyData(geologyRows) {
+      geologyDataMap = {};
+      (geologyRows || []).forEach((row, index) => {
+        const normalizedId = extractDrillholeIdFromGeoRow(row, index);
+        if (!normalizedId) return;
+        if (!Array.isArray(geologyDataMap[normalizedId])) {
+          geologyDataMap[normalizedId] = [];
+        }
+        geologyDataMap[normalizedId].push(row);
+      });
+    }
+
+    function buildAssayData(assayRows) {
+      assayDataMap = {};
+      (assayRows || []).forEach((row) => {
+        const normalizedId = extractDrillholeIdFromAssayRow(row);
+        if (!normalizedId) return;
+        if (!Array.isArray(assayDataMap[normalizedId])) {
+          assayDataMap[normalizedId] = [];
+        }
+        assayDataMap[normalizedId].push(row);
+      });
+    }
+
+    function buildSiData(siRows) {
+      siDataMap = {};
+      (siRows || []).forEach((row) => {
+        const normalizedId = extractDrillholeIdFromSiRow(row);
+        if (!normalizedId) return;
+        if (!Array.isArray(siDataMap[normalizedId])) {
+          siDataMap[normalizedId] = [];
+        }
+        siDataMap[normalizedId].push(row);
+      });
+    }
+
+    function collectRowsFromRapidLogPayload(payload) {
+      if (!payload) return [];
+      if (Array.isArray(payload)) return payload;
+
+      const arrayKey = ['results', 'data', 'records', 'items'].find((key) => Array.isArray(payload[key]));
+      if (arrayKey) return payload[arrayKey];
+
+      if (Array.isArray(payload.features)) {
+        return payload.features.map((feature) => (feature && feature.properties ? feature.properties : {}));
+      }
+
+      return [];
+    }
+
+    function extractDrillholeIdFromGeoRow(row) {
+      if (!row || typeof row !== 'object') return '';
+      const directKey = findKey(row, ['drillhole id', 'drillhole', 'hole_id', 'holeid', 'hole id']);
+      const directValue = directKey ? row[directKey] : '';
+      if (typeof directValue === 'string' || typeof directValue === 'number') {
+        const normalizedDirect = normalizeDrillholeId(directValue);
+        if (normalizedDirect) return normalizedDirect;
+      }
+
+      const nestedKey = findKey(row, ['drillhole', 'hole']);
+      const nestedValue = nestedKey ? row[nestedKey] : null;
+      if (nestedValue && typeof nestedValue === 'object') {
+        const objectCandidate = nestedValue.drillhole_id || nestedValue.drillhole || nestedValue.hole_id || nestedValue.name || nestedValue.id;
+        const normalizedObject = normalizeDrillholeId(objectCandidate);
+        if (normalizedObject) return normalizedObject;
+      }
+
+      const fallbackCandidate = row.drillhole_id || row.drillhole || row.hole_id || row.holeid || row.hole;
+      return normalizeDrillholeId(fallbackCandidate);
+    }
+
+    function extractDrillholeIdFromAssayRow(row) {
+      if (!row || typeof row !== 'object') return '';
+      const directKey = findKey(row, ['drillhole id', 'drillhole', 'hole_id', 'holeid', 'hole id', 'hole']);
+      const directValue = directKey ? row[directKey] : '';
+      if (typeof directValue === 'string' || typeof directValue === 'number') {
+        const normalizedDirect = normalizeDrillholeId(directValue);
+        if (normalizedDirect) return normalizedDirect;
+      }
+
+      const nestedKey = findKey(row, ['drillhole', 'hole']);
+      const nestedValue = nestedKey ? row[nestedKey] : null;
+      if (nestedValue && typeof nestedValue === 'object') {
+        const objectCandidate = nestedValue.drillhole_id || nestedValue.drillhole || nestedValue.hole_id || nestedValue.name || nestedValue.id || nestedValue.hole;
+        const normalizedObject = normalizeDrillholeId(objectCandidate);
+        if (normalizedObject) return normalizedObject;
+      }
+
+      const fallbackCandidate = row.drillhole_id || row.drillhole || row.hole_id || row.holeid || row.hole;
+      return normalizeDrillholeId(fallbackCandidate);
+    }
+
+    function extractDrillholeIdFromSiRow(row) {
+      if (!row || typeof row !== 'object') return '';
+      const directKey = findKey(row, ['drillhole id', 'drillhole', 'hole_id', 'holeid', 'hole id', 'hole']);
+      const directValue = directKey ? row[directKey] : '';
+      if (typeof directValue === 'string' || typeof directValue === 'number') {
+        const normalizedDirect = normalizeDrillholeId(directValue);
+        if (normalizedDirect) return normalizedDirect;
+      }
+
+      const nestedKey = findKey(row, ['drillhole', 'hole']);
+      const nestedValue = nestedKey ? row[nestedKey] : null;
+      if (nestedValue && typeof nestedValue === 'object') {
+        const objectCandidate = nestedValue.drillhole_id || nestedValue.drillhole || nestedValue.hole_id || nestedValue.name || nestedValue.id || nestedValue.hole;
+        const normalizedObject = normalizeDrillholeId(objectCandidate);
+        if (normalizedObject) return normalizedObject;
+      }
+
+      const fallbackCandidate = row.drillhole_id || row.drillhole || row.hole_id || row.holeid || row.hole;
+      return normalizeDrillholeId(fallbackCandidate);
+    }
+
+    function syncGeologyFromWorkbook() {
+      if (currentSelectedPoint && currentTopLevelTab === 'geology' && currentDetailsTab === 'drillhole') {
+        updateDetails(currentSelectedPoint);
+      }
+    }
+
+    function getInlineAssayValues(row) {
+      const values = [];
+      Object.keys(row || {}).forEach((key) => {
+        const normalized = String(key).toLowerCase();
+        if (
+          normalized.includes('assay') ||
+          normalized.includes('grade') ||
+          normalized.includes('sample') ||
+          normalized.includes('ppm') ||
+          normalized.includes('oz') ||
+          normalized.includes('au') ||
+          normalized.includes('ag')
+        ) {
+          values.push({ key, value: row[key] });
+        }
+      });
+      return values;
+    }
+
+    function getInlineSurveyValues(row) {
+      const values = [];
+      Object.keys(row || {}).forEach((key) => {
+        const normalized = String(key).toLowerCase();
+        if (
+          normalized.includes('survey') ||
+          normalized.includes('dip') ||
+          normalized.includes('azimuth') ||
+          normalized.includes('bearing') ||
+          normalized.includes('inclination') ||
+          normalized.includes('measured depth')
+        ) {
+          values.push({ key, value: row[key] });
+        }
+      });
+      return values;
+    }
+
+    function getInlineGeologyValues(row) {
+      const values = [];
+      Object.keys(row || {}).forEach((key) => {
+        const normalized = String(key).toLowerCase();
+        if (
+          normalized.includes('geology') ||
+          normalized.includes('lith') ||
+          normalized.includes('alteration') ||
+          normalized.includes('mineral') ||
+          normalized.includes('rock') ||
+          normalized.includes('ore')
+        ) {
+          values.push({ key, value: row[key] });
+        }
+      });
+      return values;
+    }
+
+    function isLikelyHttpUrl(value) {
+      const text = String(value ?? '').trim();
+      if (!text) return false;
+      try {
+        const parsed = new URL(text);
+        return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+      } catch (_error) {
+        return false;
+      }
+    }
+
+    function getWebsiteUrlFromRow(row, preferredPrefix) {
+      if (!row) return '';
+      const keys = Object.keys(row);
+      const lowerPrefix = String(preferredPrefix || '').toLowerCase();
+
+      const matchingKey = keys.find((key) => {
+        const normalized = key.toLowerCase();
+        const isWebsiteField = normalized.includes('url') || normalized.includes('link') || normalized.includes('website') || normalized.includes('web');
+        if (!isWebsiteField) return false;
+        if (!lowerPrefix) return true;
+        return normalized.includes(lowerPrefix);
+      });
+
+      if (!matchingKey) return '';
+      const candidate = row[matchingKey];
+      return isLikelyHttpUrl(candidate) ? String(candidate).trim() : '';
+    }
+
+    function buildGeologyWebsiteUrl(point, geologyRows) {
+      const firstGeologyRow = Array.isArray(geologyRows) && geologyRows.length ? geologyRows[0] : null;
+      const geologyRowUrl = getWebsiteUrlFromRow(firstGeologyRow, 'geology');
+      if (geologyRowUrl) return geologyRowUrl;
+
+      const drillholeGeologyUrl = getWebsiteUrlFromRow(point && point.row ? point.row : null, 'geology');
+      if (drillholeGeologyUrl) return drillholeGeologyUrl;
+
+      const generalGeologySheetUrl = getWebsiteUrlFromRow(firstGeologyRow, '');
+      if (generalGeologySheetUrl) return generalGeologySheetUrl;
+
+      const generalDrillholeUrl = getWebsiteUrlFromRow(point && point.row ? point.row : null, '');
+      if (generalDrillholeUrl) return generalDrillholeUrl;
+
+      const drillholeLabel = point && point.drillholeLabel ? point.drillholeLabel : '';
+      const query = encodeURIComponent(`${drillholeLabel} geology Hog Ranch`);
+      return `https://www.google.com/search?q=${query}`;
+    }
+
+    function getInlineDrillpadValues(row) {
+      const values = [];
+      Object.keys(row || {}).forEach((key) => {
+        const normalizedKey = key.toLowerCase();
+        if (normalizedKey.includes('drillpad') || normalizedKey.includes('pad')) {
+          values.push({ key, value: row[key] });
+        }
+      });
+      return values;
+    }
+
+    function findDrillpadShapeFeature(point) {
+      const features = loadedShapeGeoJson && Array.isArray(loadedShapeGeoJson.features) ? loadedShapeGeoJson.features : [];
+      if (!features.length || !point) return null;
+
+      const candidateIds = new Set();
+      if (point.drillpadId) {
+        candidateIds.add(normalizeDrillholeId(point.drillpadId));
+      }
+
+      Object.keys(point.row || {}).forEach((key) => {
+        const normalizedKey = String(key).toLowerCase();
+        if (!(normalizedKey.includes('drillpad') || normalizedKey.includes('pad'))) return;
+        const normalizedValue = normalizeDrillholeId(point.row[key]);
+        if (normalizedValue) {
+          candidateIds.add(normalizedValue);
+        }
+      });
+
+      if (!candidateIds.size) return null;
+
+      const keyPattern = /(drillpad\s*id|drillpad|pad\s*id|padid|^pad$)/i;
+      for (const feature of features) {
+        const properties = feature && feature.properties ? feature.properties : {};
+        const propertyKeys = Object.keys(properties);
+
+        const matchingKey = propertyKeys.find((key) => keyPattern.test(String(key)));
+        if (matchingKey) {
+          const featurePadId = normalizeDrillholeId(properties[matchingKey]);
+          if (featurePadId && candidateIds.has(featurePadId)) {
+            return feature;
+          }
+        }
+
+        const matchedByAnyPadField = propertyKeys.some((key) => {
+          const normalizedKey = String(key).toLowerCase();
+          if (!(normalizedKey.includes('drillpad') || normalizedKey.includes('pad'))) return false;
+          const featureValue = normalizeDrillholeId(properties[key]);
+          return featureValue && candidateIds.has(featureValue);
+        });
+        if (matchedByAnyPadField) {
+          return feature;
+        }
+      }
+
+      return null;
+    }
+
+    function getDrillpadFeatureId(feature) {
+      const properties = feature && feature.properties ? feature.properties : {};
+      const padKey = findKey(properties, ['drillpad id', 'drillpad', 'pad id', 'padid', 'pad']);
+      if (!padKey) return '';
+      return normalizeDrillholeId(properties[padKey]);
+    }
+
+    function renderDrillpadDetailsFromFeature(feature) {
+      const properties = feature && feature.properties ? feature.properties : null;
+      selectedPadDetails.innerHTML = '';
+      selectedDetails.innerHTML = '';
+      selectedGeneralDetails.innerHTML = '';
+      selectedSurveyDetails.innerHTML = '';
+      selectedGeologyDetails.innerHTML = '';
+      selectedDetails.style.display = 'none';
+      selectedGeneralDetails.style.display = 'none';
+      selectedSurveyDetails.style.display = 'none';
+      selectedGeologyDetails.style.display = 'none';
+      selectedPadDetails.style.display = 'grid';
+
+      const padCard = document.createElement('div');
+      padCard.className = 'detail-card';
+      const featurePadId = getDrillpadFeatureId(feature) || 'Unassigned';
+      padCard.innerHTML = `
+        <div class="detail-row">
+          <strong>Drillpad</strong><span>${featurePadId}</span>
+        </div>
+      `;
+
+      if (properties && Object.keys(properties).length) {
+        Object.keys(properties).forEach((key) => {
+          const rowEl = document.createElement('div');
+          rowEl.className = 'detail-row';
+          rowEl.innerHTML = `<strong>${formatDrillpadFieldLabel(key)}</strong><span>${formatValue(properties[key])}</span>`;
+          padCard.appendChild(rowEl);
+        });
+      } else {
+        const emptyPad = document.createElement('div');
+        emptyPad.className = 'panel-note';
+        emptyPad.textContent = 'No attributes were found for this drillpad feature.';
+        padCard.appendChild(emptyPad);
+      }
+
+      selectedPadDetails.appendChild(padCard);
+    }
+
+    baseMapSelect.addEventListener('change', () => {
+      currentBaseKey = baseMapSelect.value;
+      applyBaseLayer();
+    });
+
+    statusFilterControls.addEventListener('click', (event) => {
+      const trigger = event.target.closest('.status-pill');
+      if (!trigger) return;
+
+      currentStatusFilter = trigger.dataset.status || 'all';
+      statusFilterControls.querySelectorAll('.status-pill').forEach((pill) => {
+        pill.classList.toggle('is-active', pill === trigger);
+      });
+      applyStatusFilter();
+    });
+
+    topLevelTabs.addEventListener('click', (event) => {
+      const trigger = event.target.closest('.details-tab');
+      if (!trigger) return;
+      setTopLevelTab(trigger.dataset.topTab || 'survey');
+    });
+
+    detailsTabs.addEventListener('click', (event) => {
+      const trigger = event.target.closest('.details-tab');
+      if (!trigger) return;
+      setDetailsTab(trigger.dataset.tab || 'drillhole');
+    });
+
+    function toggleScrollToTopButton() {
+      const pageScroll = window.scrollY || document.documentElement.scrollTop || 0;
+      const panelScroll = detailsPanel ? detailsPanel.scrollTop : 0;
+      const shouldShow = Math.max(pageScroll, panelScroll) > 240;
+      scrollToTopButton.classList.toggle('is-visible', shouldShow);
+    }
+
+    scrollToTopButton.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (detailsPanel) {
+        detailsPanel.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    });
+
+    window.addEventListener('scroll', toggleScrollToTopButton, { passive: true });
+    if (detailsPanel) {
+      detailsPanel.addEventListener('scroll', toggleScrollToTopButton, { passive: true });
+    }
+    toggleScrollToTopButton();
+
+    applyCrsButton.addEventListener('click', () => {
+      currentCrsCode = normalizeCrsCode(crsInput.value);
+      messages.textContent = `Using UTM zone ${currentCrsCode} for the workbook coordinates.`;
+      initMap();
+      if (loadedRows.length) {
+        addDrillholeMarkers(loadedRows);
+      }
+    });
+
+    function formatValue(value) {
+      return value === undefined || value === null || value === '' ? '—' : String(value);
+    }
+
+    function parseNumber(value) {
+      if (value === undefined || value === null) return NaN;
+      return parseFloat(String(value).trim().replace(/,/g, ''));
+    }
+
+    function normalizeDrillholeId(value) {
+      const raw = String(value ?? '').trim();
+      if (!raw) return '';
+      return raw.toUpperCase().replace(/[^A-Z0-9]+/g, '');
+    }
+
+    function formatNumeric(value, decimals = 2) {
+      const num = parseNumber(value);
+      return Number.isNaN(num) ? '—' : num.toFixed(decimals);
+    }
+
+    function formatRoundedCoordinate(value) {
+      const num = parseNumber(value);
+      return Number.isNaN(num) ? '—' : String(Math.round(num));
+    }
+
+    function formatDateKey(dateObj) {
+      const year = dateObj.getFullYear();
+      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const day = String(dateObj.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function parseFlexibleDate(value) {
+      if (value === undefined || value === null || value === '') return null;
+      if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
+      if (typeof value === 'number') {
+        const date = new Date(1899, 11, 30 + value);
+        return Number.isNaN(date.getTime()) ? null : date;
+      }
+
+      const text = String(value).trim();
+      if (!text) return null;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+        const [year, month, day] = text.split('-').map(Number);
+        return new Date(year, month - 1, day);
+      }
+      if (/^\d{1,2}\/\d{1,2}\/\d{2,4}$/.test(text)) {
+        const [month, day, rawYear] = text.split('/').map((part) => Number(part));
+        const year = rawYear < 100 ? 2000 + rawYear : rawYear;
+        return new Date(year, month - 1, day);
+      }
+      const parsed = new Date(text);
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
+
+    function normalizeDateValue(value) {
+      const parsed = parseFlexibleDate(value);
+      return parsed ? formatDateKey(parsed) : '';
+    }
+
+    function getDailyTotalsDateOptions() {
+      if (!Array.isArray(dailyTotalsRows) || !dailyTotalsRows.length) return [];
+      const discoveredDates = dailyTotalsRows
+        .map((row) => {
+          const key = findKey(row, ['date', 'day', 'report date', 'daily date', 'date (daily totals)']);
+          return key ? normalizeDateValue(row[key]) : '';
+        })
+        .filter((value) => value && value !== 'Invalid Date');
+
+      if (!discoveredDates.length) return [];
+      const uniqueDates = [...new Set(discoveredDates)].sort((a, b) => new Date(a) - new Date(b));
+      const start = new Date(`${uniqueDates[0]}T00:00:00`);
+      const end = new Date(`${uniqueDates[uniqueDates.length - 1]}T00:00:00`);
+      const allDates = [];
+      const current = new Date(start);
+      while (current <= end) {
+        allDates.push(formatDateKey(current));
+        current.setDate(current.getDate() + 1);
+      }
+      return allDates;
+    }
+
+    function getDefaultDailyTotalsDate(dateOptions) {
+      if (!dateOptions.length) return '';
+      const today = formatDateKey(new Date());
+      if (today < dateOptions[0]) return dateOptions[0];
+      if (today > dateOptions[dateOptions.length - 1]) return dateOptions[dateOptions.length - 1];
+      return today;
+    }
+
+    function getDailyTotalsSummaryForSelectedDate() {
+      if (!Array.isArray(dailyTotalsRows) || !dailyTotalsRows.length) {
+        return { harrisFootage: 0, premierRcFootage: 0, pkcFootage: 0, dateOptions: [] };
+      }
+      const dateOptions = getDailyTotalsDateOptions();
+      const activeDate = selectedDailyTotalsDate || getDefaultDailyTotalsDate(dateOptions);
+      selectedDailyTotalsDate = activeDate;
+
+      const allRowsUpToSelectedDate = dateOptions.length && activeDate
+        ? dailyTotalsRows.filter((row) => {
+            const dateKey = findKey(row, ['date', 'day', 'report date', 'daily date', 'date (daily totals)']);
+            if (!dateKey) return false;
+            const rowDate = normalizeDateValue(row[dateKey]);
+            return rowDate && rowDate <= activeDate;
+          })
+        : dailyTotalsRows;
+
+      const harrisKey = findKey(allRowsUpToSelectedDate[0] || {}, ['harris footage', 'harris_footage', 'harris', 'harris footage (m)']);
+      const premierKey = findKey(allRowsUpToSelectedDate[0] || {}, ['premier rc footage', 'premier_rc_footage', 'premier rc', 'premier footage']);
+      const pkcKey = findKey(allRowsUpToSelectedDate[0] || {}, ['pkc-2 footage', 'pkc2 footage', 'pkc_2 footage', 'pkc 2 footage', 'pkc2']);
+
+      const sumColumn = (key) => allRowsUpToSelectedDate.reduce((sum, row) => {
+        const value = key ? parseNumber(row[key]) : NaN;
+        return sum + (Number.isNaN(value) ? 0 : value);
+      }, 0);
+
+      return {
+        harrisFootage: sumColumn(harrisKey),
+        premierRcFootage: sumColumn(premierKey),
+        pkcFootage: sumColumn(pkcKey),
+        dateOptions,
+      };
+    }
+
+    function getLastFootageDataDate() {
+      if (!Array.isArray(dailyTotalsRows) || !dailyTotalsRows.length) return '';
+      const dateKey = findKey(dailyTotalsRows[0] || {}, ['date', 'day', 'report date', 'daily date', 'date (daily totals)']);
+      if (!dateKey) return '';
+      const harrisKey = findKey(dailyTotalsRows[0] || {}, ['harris footage', 'harris_footage', 'harris', 'harris footage (m)']);
+      const premierKey = findKey(dailyTotalsRows[0] || {}, ['premier rc footage', 'premier_rc_footage', 'premier rc', 'premier footage']);
+      const pkcKey = findKey(dailyTotalsRows[0] || {}, ['pkc-2 footage', 'pkc2 footage', 'pkc_2 footage', 'pkc 2 footage', 'pkc2']);
+
+      const datesWithFootage = dailyTotalsRows
+        .map((row) => {
+          const harris = harrisKey ? parseNumber(row[harrisKey]) : 0;
+          const premier = premierKey ? parseNumber(row[premierKey]) : 0;
+          const pkc = pkcKey ? parseNumber(row[pkcKey]) : 0;
+          const total = (Number.isNaN(harris) ? 0 : harris) + (Number.isNaN(premier) ? 0 : premier) + (Number.isNaN(pkc) ? 0 : pkc);
+          return total > 0 ? normalizeDateValue(row[dateKey]) : '';
+        })
+        .filter((value) => value && value !== 'Invalid Date');
+
+      if (!datesWithFootage.length) return '';
+      return datesWithFootage.reduce((latest, current) => (current > latest ? current : latest));
+    }
+
+    function formatDisplayLabel(text) {
+      const raw = String(text ?? '').trim();
+      if (!raw) return '';
+      return raw
+        .replace(/[_-]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .toLowerCase()
+        .replace(/\b\w/g, (character) => character.toUpperCase());
+    }
+
+    const drillpadTruncatedFieldLabels = {
+      'ground typ': 'Ground Type',
+      'slope feas': 'Slope Feasibility',
+      'feasibilit': 'Feasibility',
+    };
+
+    function formatDrillpadFieldLabel(key) {
+      const displayLabel = formatDisplayLabel(key);
+      return drillpadTruncatedFieldLabels[displayLabel.toLowerCase()] || displayLabel;
+    }
+
+    function buildActualTargetRecord(row) {
+      const directionKey = findKey(row, ['direction', 'bearing direction']);
+      const measuredDepthKey = findKey(row, ['measured depth', 'measured_depth', 'md']);
+      const unitKey = findKey(row, ['unit of measurement', 'unit', 'uom']);
+      const dipKey = findKey(row, ['dip', 'inclination']);
+      const azimuthKey = findKey(row, ['true north azimuth', 'azimuth', 'tn azimuth']);
+      const latitudeKey = findKey(row, ['latitude', 'lat']);
+      const longitudeKey = findKey(row, ['longitude', 'lon', 'lng']);
+      const xTnKey = findKey(row, ['x (tn)', 'x(tn)', 'x tn', 'x_tn']);
+      const yTnKey = findKey(row, ['y (tn)', 'y(tn)', 'y tn', 'y_tn']);
+      const zTnKey = findKey(row, ['z (tn)', 'z(tn)', 'z tn', 'z_tn']);
+
+      return {
+        direction: directionKey ? formatValue(row[directionKey]) : '—',
+        measuredDepth: measuredDepthKey ? formatNumeric(row[measuredDepthKey]) : '—',
+        unitOfMeasurement: unitKey ? formatValue(row[unitKey]) : '—',
+        dip: dipKey ? formatValue(row[dipKey]) : '—',
+        trueNorthAzimuth: azimuthKey ? formatValue(row[azimuthKey]) : '—',
+        latitude: latitudeKey ? formatValue(row[latitudeKey]) : '—',
+        longitude: longitudeKey ? formatValue(row[longitudeKey]) : '—',
+        xTn: xTnKey ? formatNumeric(row[xTnKey]) : '—',
+        yTn: yTnKey ? formatNumeric(row[yTnKey]) : '—',
+        zTn: zTnKey ? formatNumeric(row[zTnKey]) : '—',
+        latitudeNumber: latitudeKey ? parseNumber(row[latitudeKey]) : NaN,
+        longitudeNumber: longitudeKey ? parseNumber(row[longitudeKey]) : NaN,
+        xTnNumber: xTnKey ? parseNumber(row[xTnKey]) : NaN,
+        yTnNumber: yTnKey ? parseNumber(row[yTnKey]) : NaN,
+        zTnNumber: zTnKey ? parseNumber(row[zTnKey]) : NaN,
+      };
+    }
+
+    function buildUnifiedDrillholeData(plannedRows, actualRows) {
+      drillholeDataMap = {};
+
+      plannedRows.forEach((row, index) => {
+        const drillKey = findKey(row, ['drillhole id', 'drillhole', 'hole_id', 'holeid', 'hole id']);
+        const normalizedId = normalizeDrillholeId(drillKey ? row[drillKey] : `DRILLHOLE-${index + 1}`);
+        if (!normalizedId) return;
+        drillholeDataMap[normalizedId] = {
+          id: normalizedId,
+          planned: row,
+          actual: null,
+          actualRecords: [],
+          actualDepth: null,
+          actualTotalDepth: null,
+          coordinateDepth: null,
+        };
+      });
+
+      actualRows.forEach((row) => {
+        const drillholeKey = findKey(row, ['drillhole', 'drillhole id', 'hole_id', 'holeid', 'hole id', 'hole id (actual)', 'drill hole', 'drillholeid']);
+        if (!drillholeKey) return;
+        const normalizedId = normalizeDrillholeId(row[drillholeKey]);
+        if (!normalizedId) return;
+
+        if (!drillholeDataMap[normalizedId]) {
+          drillholeDataMap[normalizedId] = {
+            id: normalizedId,
+            planned: null,
+            actual: null,
+            actualRecords: [],
+            actualDepth: null,
+            actualTotalDepth: null,
+            coordinateDepth: null,
+          };
+        }
+
+        const measuredDepthKey = findKey(row, ['measured depth', 'measured_depth', 'md', 'm', 'depth_m', 'depth']);
+        const finalDepthKey = findKey(row, ['final depth (actual)', 'final_depth_actual', 'final depth actual', 'final depth', 'actual final depth', 'total depth actual', 'total depth', 'actual total depth', 'end depth', 'final depth actual field']);
+        const dlsKey = findKey(row, ['dls', 'dl', 'dogleg severity', 'dogleg_severity', 'deviation']);
+        const measuredDepth = measuredDepthKey ? parseNumber(row[measuredDepthKey]) : NaN;
+        const finalDepth = finalDepthKey ? parseNumber(row[finalDepthKey]) : NaN;
+        const actualDepthValue = !Number.isNaN(finalDepth) ? finalDepth : measuredDepth;
+        const dlsValue = dlsKey ? parseNumber(row[dlsKey]) : NaN;
+        const target = drillholeDataMap[normalizedId];
+
+        target.actualRecords.push({
+          drillhole: normalizedId,
+          measuredDepth: Number.isNaN(measuredDepth) ? null : measuredDepth.toFixed(2),
+          dls: Number.isNaN(dlsValue) ? null : dlsValue.toFixed(2),
+          highlight: !Number.isNaN(dlsValue) && dlsValue > 30,
+        });
+
+        const currentMaxDepth = target.actualDepth === null ? NaN : parseNumber(target.actualDepth);
+        if (!Number.isNaN(measuredDepth) && (Number.isNaN(currentMaxDepth) || measuredDepth > currentMaxDepth)) {
+          target.actualDepth = measuredDepth.toFixed(2);
+        }
+
+        const currentTotalDepth = target.actualTotalDepth === null ? NaN : parseNumber(target.actualTotalDepth);
+        if (!Number.isNaN(actualDepthValue) && (Number.isNaN(currentTotalDepth) || actualDepthValue > currentTotalDepth)) {
+          target.actualTotalDepth = actualDepthValue.toFixed(2);
+        }
+
+        const currentCoordinateDepth = target.coordinateDepth === null ? NaN : parseNumber(target.coordinateDepth);
+        if (!Number.isNaN(measuredDepth) && (Number.isNaN(currentCoordinateDepth) || measuredDepth < currentCoordinateDepth)) {
+          target.coordinateDepth = measuredDepth.toFixed(2);
+          target.actual = buildActualTargetRecord(row);
+        }
+      });
+
+      actualDepthData = {};
+      actualTotalDepthData = {};
+      actualRecordsData = {};
+      Object.keys(drillholeDataMap).forEach((id) => {
+        const entry = drillholeDataMap[id];
+        if (entry.actualDepth !== null) {
+          actualDepthData[id] = entry.actualDepth;
+        }
+        if (entry.actualTotalDepth !== null) {
+          actualTotalDepthData[id] = entry.actualTotalDepth;
+        }
+        if (entry.actualRecords.length) {
+          actualRecordsData[id] = entry.actualRecords;
+        }
+      });
+    }
+
+    function mergeActualTotalDepthFromDrillholeSheet(drillholeRows) {
+      if (!Array.isArray(drillholeRows) || !drillholeRows.length) return;
+
+      drillholeRows.forEach((row) => {
+        const holeKey = findKey(row, ['hole id', 'holeid', 'hole_id', 'drillhole', 'drillhole id', 'drillholeid', 'hole']);
+        const finalDepthKey = findKey(row, ['final depth (actual)', 'final_depth_actual', 'final depth actual', 'final depth', 'actual final depth', 'total depth actual', 'total depth', 'actual total depth']);
+        if (!holeKey || !finalDepthKey) return;
+
+        const id = normalizeDrillholeId(row[holeKey]);
+        const finalDepth = parseNumber(row[finalDepthKey]);
+        if (!id || Number.isNaN(finalDepth)) return;
+
+        if (!drillholeDataMap[id]) {
+          drillholeDataMap[id] = {
+            id,
+            planned: null,
+            actual: null,
+            actualRecords: [],
+            actualDepth: null,
+            actualTotalDepth: null,
+            coordinateDepth: null,
+          };
+        }
+
+        drillholeDataMap[id].actualTotalDepth = finalDepth.toFixed(2);
+        actualTotalDepthData[id] = finalDepth.toFixed(2);
+      });
+    }
+
+    function findKey(row, candidates) {
+      const keys = Object.keys(row || {});
+      const normalizedKeys = keys.map((key) => normalizeKeyName(key));
+      const normalizedCandidates = candidates.map((text) => normalizeKeyName(text));
+
+      for (const candidate of normalizedCandidates) {
+        const exactMatchIndex = normalizedKeys.findIndex((key) => key === candidate);
+        if (exactMatchIndex !== -1) return keys[exactMatchIndex];
+      }
+
+      for (const candidate of normalizedCandidates) {
+        const containsMatchIndex = normalizedKeys.findIndex((key) => key.includes(candidate));
+        if (containsMatchIndex !== -1) return keys[containsMatchIndex];
+      }
+      return null;
+    }
+
+    function findCoordinateKey(row, candidates) {
+      const keys = Object.keys(row || {});
+      const normalizedKeys = keys.map((key) => normalizeKeyName(key));
+      const normalizedCandidates = candidates.map((text) => normalizeKeyName(text));
+
+      for (const candidate of normalizedCandidates) {
+        const exactMatchIndex = normalizedKeys.findIndex((key) => key === candidate);
+        if (exactMatchIndex !== -1) return keys[exactMatchIndex];
+      }
+      return null;
+    }
+
+    function normalizeSheetName(sheetName) {
+      return String(sheetName || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '');
+    }
+
+    function normalizeKeyName(value) {
+      return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '');
+    }
+
+    function findSheetByNames(candidateSheets, names) {
+      const normalizedNames = (names || []).map((name) => String(name || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, ''));
+      return candidateSheets.find(({ sheetName }) => normalizedNames.includes(normalizeSheetName(sheetName)));
+    }
+
+    function normalizeHoleTypeValue(value) {
+      return String(value ?? '').trim().toUpperCase();
+    }
+
+    function isBlankDateValue(value) {
+      return value === null || value === undefined || String(value).trim() === '';
+    }
+
+    function computeDrillholeStatus(row) {
+      const startKey = findKey(row, ['start date', 'start_date', 'startdate']);
+      const endKey = findKey(row, ['end date', 'end_date', 'enddate']);
+      const hasStart = startKey ? !isBlankDateValue(row[startKey]) : false;
+      const hasEnd = endKey ? !isBlankDateValue(row[endKey]) : false;
+      if (hasEnd) return 'completed';
+      if (hasStart) return 'active';
+      return 'planned';
+    }
+
+    function computeHoleCategory(holeTypeValue) {
+      return String(holeTypeValue ?? '').trim().toUpperCase() === 'RC' ? 'RC' : 'DD';
+    }
+
+    function createSquareDrillholeIcon(color, selected = false, rounded = false) {
+      const size = selected ? 18 : 14;
+      const border = selected ? 3 : 2;
+      const borderRadius = rounded ? '35%' : '0';
+      return L.divIcon({
+        className: 'hq-drillhole-square',
+        html: `
+          <span style="
+            display: block;
+            width: ${size}px;
+            height: ${size}px;
+            background: ${color};
+            border: ${border}px solid #ffffff;
+            border-radius: ${borderRadius};
+            box-sizing: border-box;
+            box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.2);
+          "></span>
+        `,
+        iconSize: [size, size],
+        iconAnchor: [size / 2, size / 2],
+        tooltipAnchor: [0, -size / 2],
+        popupAnchor: [0, -size / 2],
+      });
+    }
+
+    function applyMarkerVisualState(marker, selected) {
+      if (!marker) return;
+
+      if (typeof marker.setStyle === 'function') {
+        marker.setStyle({
+          radius: selected ? 14 : 9,
+          weight: selected ? 3 : 2,
+          fillOpacity: selected ? 1 : 0.95,
+        });
+        return;
+      }
+
+      if (marker instanceof L.Marker) {
+        const baseColor = marker._drillholeColor || '#2fbf71';
+        marker.setIcon(createSquareDrillholeIcon(baseColor, selected, !!marker._drillholeRounded));
+      }
+    }
+
+    function addDrillholeMarkers(rows) {
+      if (markerGroup) {
+        markerGroup.clearLayers();
+      }
+      const points = [];
+      let minLat = Infinity;
+      let minLng = Infinity;
+      let maxLat = -Infinity;
+      let maxLng = -Infinity;
+
+      rows.forEach((row, index) => {
+        const eastingKey = findCoordinateKey(row, ['easting (planned)', 'easting planned', 'collar easting', 'collar_easting', 'collar easting (m)', 'collar_easting(m)']);
+        const northingKey = findCoordinateKey(row, ['northing (planned)', 'northing planned', 'collar northing', 'collar_northing', 'collar northing (m)', 'collar_northing(m)']);
+        const drillKey = findKey(row, ['drillhole id', 'drillhole', 'hole_id', 'holeid', 'hole id']);
+        const statusKey = findKey(row, ['status']);
+        const toolsKey = findKey(row, ['tools', 'tool']);
+        const plannedKey = findKey(row, ['final depth (planned)', 'final_depth_planned', 'final depth planned', 'planned depth', 'depth (planned)']);
+        const actualKey = findKey(row, ['actual']);
+        const holeTypeKey = findKey(row, ['hole type', 'hole_type', 'holetype', 'drill type', 'drill_type']);
+
+        if (!eastingKey || !northingKey) {
+          messages.textContent = 'Please verify the worksheet uses Easting (Planned) and Northing (Planned) field names.';
+          return;
+        }
+
+        const eastingActualKey = findCoordinateKey(row, ['easting (actual)', 'easting actual', 'collar easting (actual)', 'collar_easting_actual']);
+        const northingActualKey = findCoordinateKey(row, ['northing (actual)', 'northing actual', 'collar northing (actual)', 'collar_northing_actual']);
+        const eastingPlanned = parseNumber(row[eastingKey]);
+        const northingPlanned = parseNumber(row[northingKey]);
+        const eastingActual = eastingActualKey ? parseNumber(row[eastingActualKey]) : NaN;
+        const northingActual = northingActualKey ? parseNumber(row[northingActualKey]) : NaN;
+        const easting = !Number.isNaN(eastingPlanned) ? eastingPlanned : eastingActual;
+        const northing = !Number.isNaN(northingPlanned) ? northingPlanned : northingActual;
+        if (Number.isNaN(easting) || Number.isNaN(northing)) return;
+
+        const drillholeLabel = drillKey ? formatValue(row[drillKey]) : `Drillhole ${index + 1}`;
+        const holeTypeValue = holeTypeKey ? formatValue(row[holeTypeKey]) : '';
+        const status = computeDrillholeStatus(row);
+        const statusValue = getStatusLabel(status);
+        const point = {
+          id: `drillhole-${index}`,
+          row,
+          easting,
+          northing,
+          rawEasting: easting,
+          rawNorthing: northing,
+          drillholeLabel,
+          drillKey,
+          statusKey,
+          toolsKey,
+          plannedKey,
+          actualKey,
+          holeTypeKey,
+          holeTypeValue,
+          holeType: normalizeHoleTypeValue(holeTypeValue),
+          category: computeHoleCategory(holeTypeValue),
+          drillpadKey: findKey(row, ['drillpad id', 'drillpad', 'pad id', 'padid', 'pad']),
+          eastingKey,
+          northingKey,
+          statusValue,
+          status,
+        };
+        point.drillholeId = normalizeDrillholeId(drillholeLabel);
+        const merged = drillholeDataMap[point.drillholeId] || {};
+        point.actual = merged.actual || null;
+        point.actualRecords = merged.actualRecords || [];
+        point.actualDepth = merged.actualDepth || null;
+        point.actualTotalDepth = merged.actualTotalDepth || null;
+        point.coordinateDepth = merged.coordinateDepth || null;
+        point.drillpadId = point.drillpadKey ? normalizeDrillholeId(row[point.drillpadKey]) : '';
+        point.drillpadRow = point.drillpadId ? drillpadDataMap[point.drillpadId] || null : null;
+        point.mapLatLng = projectToMapCoordinates(point.easting, point.northing, currentCrsCode);
+        points.push(point);
+
+        minLat = Math.min(minLat, point.mapLatLng[0]);
+        minLng = Math.min(minLng, point.mapLatLng[1]);
+        maxLat = Math.max(maxLat, point.mapLatLng[0]);
+        maxLng = Math.max(maxLng, point.mapLatLng[1]);
+      });
+
+      if (points.length === 0) {
+        messages.textContent = 'No valid drillhole coordinates found in the Drillhole sheet.';
+        drillholePoints = [];
+        updateDrillholeDropdown([]);
+        updateGeneralDetailsPanel();
+        return;
+      }
+
+      drillholePoints = points;
+      updateDrillholeDropdown(points);
+      updateGeneralDetailsPanel();
+      updateStatusSummary(points);
+
+      points.forEach((point) => {
+        const color = getStatusColor(point.status);
+        const isPlanned = point.status === 'planned';
+        const isSquareHoleType = isPlanned || point.category === 'DD';
+        const marker = isSquareHoleType
+          ? L.marker(point.mapLatLng, {
+              icon: createSquareDrillholeIcon(color, false, isPlanned),
+              pane: 'markerPane',
+            })
+          : L.circleMarker(
+              point.mapLatLng,
+              {
+                radius: 9,
+                color: '#ffffff',
+                weight: 2,
+                fillColor: color,
+                fillOpacity: 0.95,
+                pane: 'markerPane',
+              }
+            );
+
+        if (marker instanceof L.Marker) {
+          marker._drillholeColor = color;
+          marker._drillholeRounded = isPlanned;
+        }
+
+        point.marker = marker;
+        point.statusValue = point.statusValue || 'Active';
+        marker.bindTooltip(getPointTooltipContent(point), {
+          direction: 'top',
+          sticky: true,
+          opacity: 0.95,
+        });
+        const overlaps = getOverlappingPoints(point);
+        if (overlaps.length) {
+          marker.bindPopup(createOverlapPopupContent(point, marker), {
+            autoPan: true,
+            closeButton: true,
+          });
+        }
+        marker.on('click', () => {
+          drillholeSelect.value = point.id;
+          if (overlaps.length) {
+            marker.openPopup();
+          } else {
+            zoomToDrillhole(point);
+          }
+          marker.openTooltip();
+        });
+        marker.addTo(markerGroup);
+
+        if (point.status === 'completed') {
+          requestAnimationFrame(() => applyCompletedMarkerEffect(marker, point));
+        }
+      });
+
+      const southWest = L.latLng(minLat, minLng);
+      const northEast = L.latLng(maxLat, maxLng);
+      zoomToBounds(L.latLngBounds(southWest, northEast));
+
+      messages.textContent = `Loaded ${points.length} drillhole points from the Drillhole sheet.`;
+      if (currentSelectedPoint) {
+        updateDetails(currentSelectedPoint);
+      } else {
+        renderTopLevelEmptyState();
+      }
+      selectedSurveyDetails.innerHTML = '<div class="panel-note">Open the Survey tab to review survey parameters and DLS records for a selected drillhole.</div>';
+      selectedGeologyDetails.innerHTML = '<div class="panel-note">Open the Geology tab to view geology records from the workbook for a selected drillhole.</div>';
+      selectedPadDetails.innerHTML = '<div class="panel-note">Select a drillhole to inspect linked drillpad details.</div>';
+      applyStatusFilter();
+    }
+
+    function updateDetails(point) {
+      currentSelectedPoint = point;
+      selectedDetails.innerHTML = '';
+      selectedGeneralDetails.innerHTML = '';
+      selectedSurveyDetails.innerHTML = '';
+      selectedGeologyDetails.innerHTML = '';
+      selectedPadDetails.innerHTML = '';
+      const row = point.row;
+      messages.textContent = '';
+      const drillholeName = point.drillKey ? formatValue(row[point.drillKey]) : 'Unknown';
+      const statusValue = point.statusValue || (point.statusKey ? formatValue(row[point.statusKey]) : 'Unknown');
+      const normalizedStatus = normalizeStatusValue(statusValue);
+      const statusClass = normalizedStatus === 'completed' ? 'status-completed' : normalizedStatus === 'planned' ? 'status-planned' : 'status-active';
+      const toolsValue = point.toolsKey ? formatValue(row[point.toolsKey]) : 'N/A';
+      const plannedValue = point.plannedKey ? formatNumeric(row[point.plannedKey], 2) : 'N/A';
+      let actualValue = point.actualKey ? formatValue(row[point.actualKey]) : 'N/A';
+      const collarEastingValue = point.eastingKey ? formatNumeric(row[point.eastingKey]) : 'N/A';
+      const collarNorthingValue = point.northingKey ? formatNumeric(row[point.northingKey]) : 'N/A';
+      const normalizedDrillholeId = normalizeDrillholeId(drillholeName);
+      if (actualDepthData[normalizedDrillholeId]) {
+        actualValue = actualDepthData[normalizedDrillholeId];
+      }
+      const actualTotalDepthValue = point.actualTotalDepth || actualTotalDepthData[normalizedDrillholeId] || 'N/A';
+
+      const createAccordionCard = (title, subtitle, collapsed = true, type = 'accordion') => {
+        const card = document.createElement('div');
+        card.className = `${type}-card ${collapsed ? 'collapsed' : 'expanded'}`;
+        card.innerHTML = `
+          <button class="${type}-card-header" type="button">
+            <span>
+              <strong>${title}</strong>
+              ${subtitle ? `<small>${subtitle}</small>` : ''}
+            </span>
+            <span class="${type}-card-toggle">▸</span>
+          </button>
+          <div class="${type}-card-body"></div>
+        `;
+
+        const header = card.querySelector(`.${type}-card-header`);
+        header.addEventListener('click', () => {
+          const collapsedNow = card.classList.toggle('collapsed');
+          card.classList.toggle('expanded', !collapsedNow);
+        });
+
+        return {
+          card,
+          body: card.querySelector(`.${type}-card-body`),
+        };
+      };
+
+      const padCard = document.createElement('div');
+      padCard.className = 'detail-card';
+      const padId = point.drillpadId || 'Unassigned';
+      const padRow = point.drillpadRow;
+      const drillpadShapeFeature = findDrillpadShapeFeature(point);
+      currentSelectedDrillpadFeature = drillpadShapeFeature || null;
+      const shapefileProperties = drillpadShapeFeature && drillpadShapeFeature.properties ? drillpadShapeFeature.properties : null;
+      padCard.innerHTML = `
+        <div class="detail-row">
+          <strong>Drillpad</strong><span>${padId || 'Unassigned'}</span>
+        </div>
+      `;
+
+      if (shapefileProperties && Object.keys(shapefileProperties).length) {
+        Object.keys(shapefileProperties).forEach((key) => {
+          const rowEl = document.createElement('div');
+          rowEl.className = 'detail-row';
+          rowEl.innerHTML = `<strong>${formatDrillpadFieldLabel(key)}</strong><span>${formatValue(shapefileProperties[key])}</span>`;
+          padCard.appendChild(rowEl);
+        });
+      } else {
+        const drillpadSource = padRow || null;
+        if (drillpadSource) {
+          const padKeys = Object.keys(drillpadSource).filter((key) => {
+            const normalized = key.toLowerCase();
+            return !normalized.includes('drillhole');
+          });
+          padKeys.forEach((key) => {
+            const rowEl = document.createElement('div');
+            rowEl.className = 'detail-row';
+            rowEl.innerHTML = `<strong>${formatDisplayLabel(key)}</strong><span>${formatValue(drillpadSource[key])}</span>`;
+            padCard.appendChild(rowEl);
+          });
+        } else {
+          const inlinePadValues = getInlineDrillpadValues(row);
+          if (inlinePadValues.length) {
+            inlinePadValues.forEach((entry) => {
+              const rowEl = document.createElement('div');
+              rowEl.className = 'detail-row';
+              rowEl.innerHTML = `<strong>${formatDisplayLabel(entry.key)}</strong><span>${formatValue(entry.value)}</span>`;
+              padCard.appendChild(rowEl);
+            });
+          } else {
+            const emptyPad = document.createElement('div');
+            emptyPad.className = 'panel-note';
+            emptyPad.textContent = 'No drillpad details were found for this drillhole.';
+            padCard.appendChild(emptyPad);
+          }
+        }
+      }
+
+      if (currentDetailsTab === 'drillhole') {
+        selectedDetails.style.display = 'grid';
+        selectedGeneralDetails.style.display = 'none';
+        selectedSurveyDetails.style.display = 'none';
+        selectedGeologyDetails.style.display = 'none';
+        selectedPadDetails.style.display = 'none';
+        selectedDetails.innerHTML = '';
+
+        if (currentTopLevelTab === 'assay') {
+          const siRows = siDataMap[normalizedDrillholeId] || [];
+          const assayCard = document.createElement('div');
+          assayCard.className = 'detail-card';
+
+          if (siRows.length) {
+            const significantInterceptsCount = countSignificantIntercepts(siRows);
+
+            const siHeader = document.createElement('div');
+            siHeader.className = 'detail-row';
+            siHeader.innerHTML = '<strong>Significant Intercepts</strong><span>' + significantInterceptsCount + '</span>';
+            assayCard.appendChild(siHeader);
+
+            const siNote = document.createElement('div');
+            siNote.className = 'panel-note';
+            siNote.textContent = `Significant assay intercepts for hole ${drillholeName} reported at a cut-off grade of ≥ 0.15 g/t Au with a maximum internal dilution of 5 ft`;
+            assayCard.appendChild(siNote);
+
+            const siKeys = Array.from(new Set(
+              siRows.flatMap((siRow) =>
+                Object.keys(siRow || {})
+                  .filter((key) => {
+                    const normalized = String(key || '').toLowerCase();
+                    return normalized.includes('ft')
+                      || normalized.includes('au g/t')
+                      || normalized.includes('peak au g/t');
+                  })
+              )
+            ));
+
+            const headerMap = {
+              'from (ft)': { label: 'From', unit: 'ft' },
+              'to (ft)': { label: 'To', unit: 'ft' },
+              'interval (ft)': { label: 'Interval', unit: 'ft' },
+              'au g/t': { label: 'Au g/t', unit: '' },
+              'peak au g/t': { label: 'Peak Au g/t', unit: '' },
+              'from': { label: 'From', unit: '' },
+              'to': { label: 'To', unit: '' },
+              'interval': { label: 'Interval', unit: '' },
+            };
+
+            const tableWrapper = document.createElement('div');
+            tableWrapper.className = 'si-table-container';
+            const table = document.createElement('table');
+            table.className = 'si-table';
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+
+            const interceptHeader = document.createElement('th');
+            interceptHeader.innerHTML = '<span class="si-header-label">#</span><span class="si-header-unit">Index</span>';
+            headerRow.appendChild(interceptHeader);
+
+            siKeys.forEach((key) => {
+              const th = document.createElement('th');
+              const normalizedKey = String(key || '').trim().toLowerCase();
+              const mapping = headerMap[normalizedKey];
+              if (mapping) {
+                th.innerHTML = `<span class="si-header-label">${mapping.label}</span>${mapping.unit ? `<span class="si-header-unit">(${mapping.unit})</span>` : ''}`;
+              } else {
+                const split = String(formatDisplayLabel(key)).replace(/G\/T/gi, 'g/t').split(' (');
+                const label = split[0];
+                const unit = split[1] ? split[1].replace(')', '') : '';
+                th.innerHTML = `<span class="si-header-label">${label}</span>${unit ? `<span class="si-header-unit">(${unit})</span>` : ''}`;
+              }
+              headerRow.appendChild(th);
+            });
+
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+
+            const tbody = document.createElement('tbody');
+            siRows.forEach((siRow, index) => {
+              const rowEl = document.createElement('tr');
+              const interceptCell = document.createElement('td');
+              interceptCell.textContent = String(index + 1);
+              rowEl.appendChild(interceptCell);
+
+              siKeys.forEach((key) => {
+                const td = document.createElement('td');
+                const rawValue = siRow[key];
+                const isPureNumber = typeof rawValue === 'number' || /^-?\d+(\.\d+)?$/.test(String(rawValue ?? '').trim());
+                const normalizedKey = String(key || '').trim().toLowerCase();
+                const decimals = ['from (ft)', 'to (ft)', 'interval (ft)'].includes(normalizedKey) ? 0 : 2;
+                td.textContent = isPureNumber ? formatNumeric(rawValue, decimals) : formatValue(rawValue);
+                rowEl.appendChild(td);
+              });
+
+              tbody.appendChild(rowEl);
+            });
+
+            table.appendChild(tbody);
+            tableWrapper.appendChild(table);
+            assayCard.appendChild(tableWrapper);
+          } else {
+            const emptySi = document.createElement('div');
+            emptySi.className = 'panel-note';
+            emptySi.textContent = 'No significant intercepts were found for this drillhole in the SI sheet.';
+            assayCard.appendChild(emptySi);
+          }
+
+          selectedDetails.appendChild(assayCard);
+          selectedGeneralDetails.innerHTML = '';
+          selectedSurveyDetails.innerHTML = '';
+          selectedGeologyDetails.innerHTML = '';
+          selectedAssayDetails.innerHTML = '';
+          selectedPadDetails.innerHTML = '';
+          return;
+        }
+
+        if (currentTopLevelTab === 'geology') {
+          const geologyRows = geologyDataMap[normalizedDrillholeId] || [];
+          const geologyCard = document.createElement('div');
+          geologyCard.className = 'detail-card';
+          geologyCard.innerHTML = `
+            <div class="detail-row">
+              <strong>Drillhole</strong><span>${drillholeName}</span>
+            </div>
+          `;
+
+          if (geologyRows.length) {
+            const primaryGeologyRow = geologyRows[0];
+            Object.keys(primaryGeologyRow).forEach((key) => {
+              const normalized = String(key).toLowerCase();
+              if (normalized.includes('drillhole')) return;
+              const rowEl = document.createElement('div');
+              rowEl.className = 'detail-row';
+              rowEl.innerHTML = `<strong>${formatDisplayLabel(key)}</strong><span>${formatValue(primaryGeologyRow[key])}</span>`;
+              geologyCard.appendChild(rowEl);
+            });
+            if (geologyRows.length > 1) {
+              const note = document.createElement('div');
+              note.className = 'panel-note';
+              note.textContent = `${geologyRows.length} geology rows found. Showing the first matching row.`;
+              geologyCard.appendChild(note);
+            }
+          } else {
+            const inlineGeologyValues = getInlineGeologyValues(row);
+            if (inlineGeologyValues.length) {
+              inlineGeologyValues.forEach((entry) => {
+                const rowEl = document.createElement('div');
+                rowEl.className = 'detail-row';
+                rowEl.innerHTML = `<strong>${formatDisplayLabel(entry.key)}</strong><span>${formatValue(entry.value)}</span>`;
+                geologyCard.appendChild(rowEl);
+              });
+            } else {
+              const emptyGeology = document.createElement('div');
+              emptyGeology.className = 'panel-note';
+              emptyGeology.textContent = 'No geology details were found for this drillhole.';
+              geologyCard.appendChild(emptyGeology);
+            }
+          }
+
+          const geologyWebsiteUrl = buildGeologyWebsiteUrl(point, geologyRows);
+          const websiteRow = document.createElement('div');
+          websiteRow.className = 'detail-row';
+          const websiteLabel = document.createElement('strong');
+          websiteLabel.textContent = 'External Geology';
+          const websiteValue = document.createElement('span');
+          const websiteLink = document.createElement('a');
+          websiteLink.className = 'geology-link';
+          websiteLink.href = geologyWebsiteUrl;
+          websiteLink.target = '_blank';
+          websiteLink.rel = 'noopener noreferrer';
+          websiteLink.textContent = 'Open Website';
+          websiteValue.appendChild(websiteLink);
+          websiteRow.appendChild(websiteLabel);
+          websiteRow.appendChild(websiteValue);
+          geologyCard.appendChild(websiteRow);
+
+          const websiteNote = document.createElement('p');
+          websiteNote.className = 'geology-web-note';
+          websiteNote.textContent = 'Uses geology URL fields from your data when available; otherwise opens a web search for this drillhole.';
+          geologyCard.appendChild(websiteNote);
+
+          selectedDetails.appendChild(geologyCard);
+          selectedGeneralDetails.innerHTML = '';
+          selectedSurveyDetails.innerHTML = '';
+          selectedGeologyDetails.innerHTML = '';
+          selectedAssayDetails.innerHTML = '';
+          selectedPadDetails.innerHTML = '';
+          return;
+        }
+
+        selectedDetails.innerHTML = `
+          <div class="detail-card">
+            <div class="detail-row">
+              <strong>Drillhole</strong><span>${drillholeName}</span>
+            </div>
+            <div class="detail-row">
+              <strong>Status</strong><span><span class="status-chip ${statusClass}">${statusValue}</span></span>
+            </div>
+            <div class="detail-row">
+              <strong>Tools</strong><span>${toolsValue}</span>
+            </div>
+          </div>
+        `;
+
+        const panel = document.createElement('div');
+        panel.className = 'plan-actual detail-card';
+        panel.innerHTML = `
+          <div><strong>Collar Easting</strong><span>${collarEastingValue}</span></div>
+          <div><strong>Collar Northing</strong><span>${collarNorthingValue}</span></div>
+          <div class="metric-divider" aria-hidden="true"></div>
+          <div><strong>Planned Depth</strong><span>${plannedValue}</span></div>
+          <div><strong>Actual Survey Depth</strong><span>${actualValue}</span></div>
+          <div><strong>Actual Total Depth (from field)</strong><span>${actualTotalDepthValue}</span></div>
+        `;
+        selectedDetails.appendChild(panel);
+
+        const surveySectionDivider = document.createElement('div');
+        surveySectionDivider.className = 'metric-divider';
+        surveySectionDivider.setAttribute('aria-hidden', 'true');
+        selectedDetails.appendChild(surveySectionDivider);
+
+        const surveyRecordsForCount = point.actualRecords || actualRecordsData[normalizedDrillholeId] || [];
+        const surveyCount = surveyRecordsForCount.length;
+
+        const actualAccordion = createAccordionCard('Survey Parameters', 'Operational survey snapshot', false, 'accordion');
+        if (point.actual) {
+          actualAccordion.body.innerHTML = `
+            <div class="actual-grid">
+              <div class="actual-row"><span class="actual-label">Number of Surveys</span><span class="actual-value">${surveyCount}</span></div>
+              <div class="actual-row"><span class="actual-label">Dip</span><span class="actual-value">${point.actual.dip}</span></div>
+              <div class="actual-row"><span class="actual-label">Azimuth</span><span class="actual-value">${point.actual.trueNorthAzimuth}</span></div>
+              <div class="actual-row"><span class="actual-label">Direction</span><span class="actual-value">${point.actual.direction}</span></div>
+              <div class="actual-row"><span class="actual-label">Unit</span><span class="actual-value">${point.actual.unitOfMeasurement}</span></div>
+              <div class="actual-row"><span class="actual-label">Measured Depth</span><span class="actual-value">${point.actual.measuredDepth}</span></div>
+              <div class="actual-row"><span class="actual-label">Latitude</span><span class="actual-value">${point.actual.latitude}</span></div>
+              <div class="actual-row"><span class="actual-label">Longitude</span><span class="actual-value">${point.actual.longitude}</span></div>
+              <div class="actual-row"><span class="actual-label">X (TN)</span><span class="actual-value">${formatRoundedCoordinate(point.actual.xTnNumber)}</span></div>
+              <div class="actual-row"><span class="actual-label">Y (TN)</span><span class="actual-value">${formatRoundedCoordinate(point.actual.yTnNumber)}</span></div>
+              <div class="actual-row"><span class="actual-label">Z (TN)</span><span class="actual-value">${formatRoundedCoordinate(point.actual.zTnNumber)}</span></div>
+            </div>
+            <div class="panel-note panel-note-small">Number of Surveys is the total survey count for this drillhole; all other values above (Dip, Azimuth, Direction, Unit, Measured Depth, Latitude, Longitude, X/Y/Z (TN)) are taken from the first survey instance recorded.</div>
+          `;
+        } else {
+          actualAccordion.body.innerHTML = '<div class="panel-note">No survey parameters were found for this drillhole.</div>';
+        }
+        selectedDetails.appendChild(actualAccordion.card);
+
+        const detailsKeys = Object.keys(row).filter((key) => {
+          return [point.drillKey, point.statusKey, point.plannedKey, point.actualKey, point.eastingKey, point.northingKey].indexOf(key) === -1;
+        });
+
+        const plannedAccordion = createAccordionCard('Drillhole Parameters', `${detailsKeys.length} field${detailsKeys.length === 1 ? '' : 's'}`, true, 'accordion');
+        if (detailsKeys.length) {
+          detailsKeys.forEach((key) => {
+            const rowEl = document.createElement('div');
+            rowEl.className = 'detail-row';
+            rowEl.innerHTML = `<strong>${formatDisplayLabel(key)}</strong><span>${formatValue(row[key])}</span>`;
+            plannedAccordion.body.appendChild(rowEl);
+          });
+        } else {
+          plannedAccordion.body.innerHTML = '<div class="panel-note">No additional planned parameters available for this drillhole.</div>';
+        }
+        selectedDetails.appendChild(plannedAccordion.card);
+
+        const actualRecords = point.actualRecords || actualRecordsData[normalizedDrillholeId] || [];
+        const dlsAccordion = createAccordionCard('DLS Details', `${actualRecords.length} record${actualRecords.length === 1 ? '' : 's'}`, true, 'dls');
+        if (actualRecords.length) {
+          actualRecords.forEach((record) => {
+            const rowEl = document.createElement('div');
+            rowEl.className = `dls-record${record.highlight ? ' highlighted' : ''}`;
+            rowEl.innerHTML = `
+              <div><strong>Drillhole</strong><span>${formatValue(record.drillhole)}</span></div>
+              <div><strong>Measured Depth</strong><span>${record.measuredDepth !== null ? record.measuredDepth : '—'}</span></div>
+              <div><strong>DLS</strong><span>${record.dls !== null ? record.dls : '—'}</span></div>
+            `;
+            dlsAccordion.body.appendChild(rowEl);
+          });
+        } else {
+          dlsAccordion.body.innerHTML = '<div class="panel-note">No DLS records available for this drillhole.</div>';
+        }
+        selectedDetails.appendChild(dlsAccordion.card);
+
+        selectedGeneralDetails.innerHTML = '';
+        selectedSurveyDetails.innerHTML = '';
+        selectedGeologyDetails.innerHTML = '';
+        selectedPadDetails.innerHTML = '';
+      }
+    }
+
+    function parseWorkbook(workbook) {
+      const sheetNames = workbook.SheetNames || [];
+      if (!sheetNames.length) {
+        messages.textContent = 'Excel file has no worksheets.';
+        return;
+      }
+
+      const candidateSheets = sheetNames.map((sheetName) => {
+        const sheet = workbook.Sheets[sheetName];
+        const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+        return { sheetName, rows };
+      });
+
+      const drillholeSheet = candidateSheets.find(({ sheetName, rows }) => {
+        if (!rows.length) return false;
+        const hasDrillholeId = findKey(rows[0], ['drillhole id', 'drillhole', 'hole_id', 'holeid', 'hole id']) !== null;
+        const hasCoordinates = findKey(rows[0], ['collar easting', 'collar_easting', 'easting']) !== null && findKey(rows[0], ['collar northing', 'collar_northing', 'northing']) !== null;
+        const lowerName = String(sheetName || '').trim().toLowerCase();
+        return (hasDrillholeId && hasCoordinates) || lowerName.includes('drillhole');
+      });
+      const sheetByName = candidateSheets.find(({ sheetName }) => sheetName.toLowerCase().includes('drillhole'));
+      const selectedSheet = drillholeSheet || sheetByName || candidateSheets[0];
+
+      if (!selectedSheet || selectedSheet.rows.length === 0) {
+        messages.textContent = `The worksheet '${selectedSheet?.sheetName || 'unknown'}' contains no rows.`;
+        return;
+      }
+
+      const hasDrillholeField = findKey(selectedSheet.rows[0], ['drillhole id', 'drillhole', 'hole_id', 'holeid', 'hole id']) !== null;
+      const hasCoordinateFields = findKey(selectedSheet.rows[0], ['collar easting', 'collar_easting', 'easting']) !== null && findKey(selectedSheet.rows[0], ['collar northing', 'collar_northing', 'northing']) !== null;
+      if (!hasDrillholeField || !hasCoordinateFields) {
+        messages.textContent = `The worksheet '${selectedSheet.sheetName}' does not contain the required hole ID and collar coordinate fields.`;
+        return;
+      }
+
+      const surveySheet = findSheetByNames(candidateSheets, ['survey_imdex', 'survey', 'actual', 'actuals', 'actual survey', 'asbuilt', 'as-built'])
+        || candidateSheets.find(({ sheetName, rows }) => {
+          if (!rows.length) return false;
+          const lowerName = String(sheetName || '').trim().toLowerCase();
+          const byName = lowerName.includes('survey') || lowerName.includes('actual') || lowerName.includes('drilling');
+          const byField = findKey(rows[0], ['drillhole', 'hole id', 'drillhole id', 'hole_id', 'holeid', 'measured depth', 'measured_depth', 'dls', 'true north azimuth']) !== null;
+          return byName || byField;
+        });
+      const actualRows = surveySheet && surveySheet.rows.length > 0 ? surveySheet.rows : [];
+      const assaySheet = findSheetByNames(candidateSheets, ['assay', 'assays']) || candidateSheets.find(({ sheetName, rows }) => {
+        if (!rows.length) return false;
+        const lowerName = sheetName.toLowerCase();
+        const byName = lowerName.includes('assay') || lowerName.includes('assays');
+        const byField = findKey(rows[0], ['assay', 'assay value', 'grade', 'au', 'ag']) !== null;
+        return byName || byField;
+      });
+      const siSheet = findSheetByNames(candidateSheets, ['si', 's i', 'sidata', 'si data', 'significant intercept', 'significant intercepts', 'significant interval', 'significant intervals']) || candidateSheets.find(({ sheetName, rows }) => {
+        if (!rows.length) return false;
+        const lowerName = String(sheetName || '').trim().toLowerCase();
+        const normalizedName = lowerName.replace(/[^a-z0-9]+/g, '');
+        const byName = normalizedName === 'si' || normalizedName.startsWith('si') || normalizedName.includes('significantintercept') || normalizedName.includes('significantinterval');
+        const byField = findKey(rows[0], ['significant intercept', 'significant interval', 'intercept', 'from', 'to', 'width']) !== null;
+        return byName || byField;
+      });
+      const drillpadSheet = findSheetByNames(candidateSheets, ['drillpad', 'drill pad', 'pads', 'pad']) || candidateSheets.find(({ sheetName, rows }) => {
+        if (!rows.length) return false;
+        const byName = sheetName.toLowerCase().includes('drillpad');
+        const byField = findKey(rows[0], ['drillpad id', 'drillpad', 'pad id', 'padid', 'pad']) !== null;
+        return byName || byField;
+      });
+      const geologySheet = findSheetByNames(candidateSheets, ['geology', 'geological', 'lithology', 'lithologies']) || candidateSheets.find(({ sheetName, rows }) => {
+        if (!rows.length) return false;
+        const lowerName = sheetName.toLowerCase();
+        const byName = lowerName.includes('geology') || lowerName.includes('lithology');
+        const byField = findKey(rows[0], ['geology', 'lithology', 'alteration', 'mineralization', 'rock type']) !== null;
+        return byName || byField;
+      });
+      const dailyTotalsSheet = findSheetByNames(candidateSheets, ['daily totals', 'daily_totals', 'daily total', 'daily totals data']) || candidateSheets.find(({ sheetName, rows }) => {
+        if (!rows.length) return false;
+        const lowerName = String(sheetName || '').trim().toLowerCase();
+        const byName = lowerName.includes('daily') && lowerName.includes('total');
+        const byField = findKey(rows[0], ['harris footage', 'premier rc footage', 'pkc-2 footage', 'pkc 2 footage']) !== null;
+        return byName || byField;
+      });
+      const drillpadRows = drillpadSheet && drillpadSheet.rows.length > 0 ? drillpadSheet.rows : [];
+      const geologyRows = geologySheet && geologySheet.rows.length > 0 ? geologySheet.rows : [];
+      const assayRows = assaySheet && assaySheet.rows.length > 0 ? assaySheet.rows : [];
+      const siRows = siSheet && siSheet.rows.length > 0 ? siSheet.rows : [];
+      dailyTotalsRows = dailyTotalsSheet && dailyTotalsSheet.rows.length > 0 ? dailyTotalsSheet.rows : [];
+      selectedDailyTotalsDate = '';
+      buildUnifiedDrillholeData(selectedSheet.rows, actualRows);
+      mergeActualTotalDepthFromDrillholeSheet(selectedSheet.rows);
+      buildDrillpadData(drillpadRows);
+      buildGeologyData(geologyRows);
+      buildAssayData(assayRows);
+      buildSiData(siRows);
+
+      loadedRows = selectedSheet.rows;
+      addDrillholeMarkers(loadedRows);
+      updateStatusSummary();
+      syncGeologyFromWorkbook();
+      updateAssayCoverageNote();
+    }
+
+    function processActualDepths(rows) {
+      buildUnifiedDrillholeData(loadedRows, rows);
+    }
+
+    function parseArrayBufferToWorkbook(data) {
+      try {
+        const arrayData = data instanceof Uint8Array ? data : new Uint8Array(data);
+        return XLSX.read(arrayData, { type: 'array' });
+      } catch (firstError) {
+        try {
+          const uint8 = data instanceof Uint8Array ? data : new Uint8Array(data);
+          let binary = '';
+          const chunkSize = 0x8000;
+          for (let i = 0; i < uint8.length; i += chunkSize) {
+            binary += String.fromCharCode.apply(null, uint8.subarray(i, i + chunkSize));
+          }
+          return XLSX.read(binary, { type: 'binary' });
+        } catch (secondError) {
+          console.error('First parse error:', firstError);
+          console.error('Second parse error:', secondError);
+          throw secondError;
+        }
+      }
+    }
+
+    fileInput.addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      if (typeof XLSX === 'undefined') {
+        messages.textContent = 'The XLSX library failed to load. Please check your network connection.';
+        return;
+      }
+
+      messages.textContent = `Reading workbook ${file.name} (${file.type || 'unknown type'})...`;
+      const reader = new FileReader();
+      reader.onerror = () => {
+        messages.textContent = 'Unable to read the selected file. Please choose a valid Excel workbook.';
+      };
+      reader.onload = (e) => {
+        try {
+          const arrayBuffer = e.target.result;
+          const workbook = parseArrayBufferToWorkbook(arrayBuffer);
+          parseWorkbook(workbook);
+        } catch (error) {
+          messages.textContent = `Unable to parse the Excel file: ${error.message}`;
+          console.error('Excel parse failed:', error);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    });
+
+    function loadSpatialFile(file, target = 'pads') {
+      if (!file) return;
+
+      const lowerName = file.name.toLowerCase();
+      const isJson = lowerName.endsWith('.geojson') || lowerName.endsWith('.json');
+      const isZip = lowerName.endsWith('.zip');
+
+      if (!isJson && !isZip) {
+        messages.textContent = "Please select a .zip shapefile package or GeoJSON (.geojson/.json).";
+        return;
+      }
+
+      if (isZip && typeof shp === 'undefined') {
+        messages.textContent = 'Shapefile parser failed to load. Please check your network connection.';
+        return;
+      }
+
+      const shouldLoadAsTenement = target === 'tenement' || lowerName.includes('tenement');
+      const layerName = shouldLoadAsTenement ? 'tenement layer' : 'spatial layer';
+      messages.textContent = `Reading ${layerName} ${file.name}...`;
+
+      const reader = new FileReader();
+      reader.onerror = () => {
+        messages.textContent = `Unable to read the selected ${shouldLoadAsTenement ? 'tenement' : 'spatial'} file.`;
+      };
+
+      reader.onload = async (e) => {
+        try {
+          let raw;
+          if (isJson) {
+            raw = JSON.parse(String(e.target.result || '{}'));
+          } else {
+            raw = await shp(e.target.result);
+          }
+
+          const featureCollection = toFeatureCollection(raw);
+          if (!featureCollection || !featureCollection.features.length) {
+            messages.textContent = `No features found in the selected ${shouldLoadAsTenement ? 'tenement' : 'spatial'} file.`;
+            return;
+          }
+
+          const normalizedFeatureCollection = normalizeFeatureCollectionCoordinates(featureCollection);
+
+          if (shouldLoadAsTenement) {
+            loadedTenementGeoJson = normalizedFeatureCollection;
+            renderTenementLayer(loadedTenementGeoJson, true);
+            messages.textContent = `Loaded tenement layer: ${normalizedFeatureCollection.features.length} feature${normalizedFeatureCollection.features.length === 1 ? '' : 's'}.`;
+            return;
+          }
+
+          loadedShapeGeoJson = normalizedFeatureCollection;
+          renderShapeLayer(loadedShapeGeoJson, true);
+          messages.textContent = `Loaded spatial layer: ${normalizedFeatureCollection.features.length} feature${normalizedFeatureCollection.features.length === 1 ? '' : 's'}.`;
+          updateStatusSummary();
+          if (currentSelectedPoint) {
+            updateDetails(currentSelectedPoint);
+          }
+        } catch (error) {
+          messages.textContent = `Unable to parse ${shouldLoadAsTenement ? 'tenement' : 'spatial'} file: ${error.message}`;
+          console.error(`${shouldLoadAsTenement ? 'Tenement' : 'Spatial'} parse failed:`, error);
+        }
+      };
+
+      if (isJson) {
+        reader.readAsText(file);
+      } else {
+        reader.readAsArrayBuffer(file);
+      }
+    }
+
+    shapefileInput.addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      loadSpatialFile(file, 'pads');
+    });
+
+    tenementInput.addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      loadSpatialFile(file, 'tenement');
+    });
+
+    drillholeSelect.addEventListener('change', (event) => {
+      const selectedId = event.target.value;
+      const point = drillholePoints.find((item) => item.id === selectedId);
+      if (point) {
+        zoomToDrillhole(point);
+      }
+    });
+
+    if (assayCoverageToggle) {
+      assayCoverageToggle.addEventListener('click', () => {
+        assayCoverageNote.classList.toggle('is-expanded');
+      });
+    }
+
+    if (assayCoverageList) {
+      assayCoverageList.addEventListener('click', (event) => {
+        const holeButton = event.target.closest('.assay-coverage-hole');
+        if (!holeButton) return;
+        const point = drillholePoints.find((item) => item.id === holeButton.dataset.drillholeId);
+        if (point) {
+          drillholeSelect.value = point.id;
+          zoomToDrillhole(point);
+        }
+      });
+    }
+
+    initMap();
+    updateStatusSummary();
+    setTopLevelTab('survey');
+    setDetailsTab('general');
+    messages.textContent = 'Load Hog_Ranch.xlsm and optionally Pads/Tenement shapefiles (.zip/.geojson) to overlay spatial context.';
+    syncGeologyFromWorkbook();
+  </script>
+  <script src="autoload.js"></script>
+</body>
+</html>
