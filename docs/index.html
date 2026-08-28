@@ -781,6 +781,50 @@
       font-variant-numeric: tabular-nums;
     }
 
+    .sample-submission-note {
+      margin-top: 12px;
+    }
+
+    .sample-submission-body {
+      display: none;
+      margin: 0 12px 12px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .sample-submission-note.is-expanded .sample-submission-body {
+      display: block;
+    }
+
+    .sample-submission-select {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(160, 166, 120, 0.4);
+      background: rgba(255, 255, 255, 0.08);
+      color: #f5f8ff;
+      font: inherit;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    .sample-submission-select option {
+      color: #111;
+    }
+
+    .sample-submitted-note {
+      margin: 6px 0 10px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      background: rgba(160, 166, 120, 0.16);
+      border: 1px solid rgba(160, 166, 120, 0.4);
+      color: #f5f8ff;
+    }
+
+    .sample-submitted-note strong {
+      color: #A0A678;
+    }
+
     #messages {
       color: rgba(255, 255, 255, 0.68);
       font-size: 0.98rem;
@@ -1273,6 +1317,17 @@
           </button>
           <div class="assay-coverage-list" id="assayCoverageList"></div>
         </div>
+        <div class="assay-coverage-note sample-submission-note" id="sampleSubmissionNote" style="display:none;">
+          <button type="button" class="assay-coverage-toggle" id="sampleSubmissionToggle">
+            <span class="assay-coverage-text" id="sampleSubmissionText"></span>
+            <span class="assay-coverage-arrow" aria-hidden="true">▸</span>
+          </button>
+          <div class="sample-submission-body">
+            <select id="sampleSubmissionSelect" class="sample-submission-select">
+              <option value="">Choose hole</option>
+            </select>
+          </div>
+        </div>
         <div id="drillpadActionLegend" class="drillpad-action-legend details-panel" aria-label="Drillpad action color legend">
           <p class="drillpad-action-legend-title">Drillpad Status Colors</p>
           <div class="drillpad-action-legend-items">
@@ -1361,6 +1416,10 @@
     const assayCoverageToggle = document.getElementById('assayCoverageToggle');
     const assayCoverageText = document.getElementById('assayCoverageText');
     const assayCoverageList = document.getElementById('assayCoverageList');
+    const sampleSubmissionNote = document.getElementById('sampleSubmissionNote');
+    const sampleSubmissionToggle = document.getElementById('sampleSubmissionToggle');
+    const sampleSubmissionText = document.getElementById('sampleSubmissionText');
+    const sampleSubmissionSelect = document.getElementById('sampleSubmissionSelect');
     const detailsTabs = document.getElementById('detailsTabs');
     const drillpadActionLegend = document.getElementById('drillpadActionLegend');
     const messages = document.getElementById('messages');
@@ -2191,6 +2250,24 @@
         : siRows.length;
     }
 
+    function findAuGradeKey(siRows) {
+      return (siRows || []).reduce((foundKey, siRow) => {
+        if (foundKey) return foundKey;
+        return Object.keys(siRow || {}).find((key) => {
+          const normalized = String(key).toLowerCase();
+          return normalized.includes('au g/t') && !normalized.includes('peak');
+        }) || null;
+      }, null);
+    }
+
+    function countAssayEntriesWithGrade(siRows) {
+      if (!Array.isArray(siRows) || !siRows.length) return 0;
+      const auGradeKey = findAuGradeKey(siRows);
+      return auGradeKey
+        ? siRows.filter((siRow) => String(siRow[auGradeKey] ?? '').trim() !== '').length
+        : siRows.length;
+    }
+
     function updateAssayCoverageNote() {
       if (!assayCoverageNote) return;
       if (currentDetailsTab !== 'drillhole' || currentTopLevelTab !== 'assay' || !Array.isArray(drillholePoints) || !drillholePoints.length) {
@@ -2199,14 +2276,14 @@
       }
       const total = drillholePoints.length;
       const holesWithAssay = drillholePoints
-        .filter((point) => Array.isArray(siDataMap[point.drillholeId]) && siDataMap[point.drillholeId].length > 0)
+        .filter((point) => countAssayEntriesWithGrade(siDataMap[point.drillholeId]) > 0)
         .sort((a, b) => String(a.drillholeLabel).localeCompare(String(b.drillholeLabel), undefined, { numeric: true }));
 
       assayCoverageText.innerHTML = `<strong>${holesWithAssay.length} of ${total}</strong> drillholes have available assay data.`;
 
       if (holesWithAssay.length) {
         assayCoverageList.innerHTML = holesWithAssay.map((point) => {
-          const count = countSignificantIntercepts(siDataMap[point.drillholeId]);
+          const count = countAssayEntriesWithGrade(siDataMap[point.drillholeId]);
           return `
             <button type="button" class="assay-coverage-hole" data-drillhole-id="${point.id}">
               <span>${formatValue(point.drillholeLabel)}</span>
@@ -2219,6 +2296,33 @@
       }
 
       assayCoverageNote.style.display = 'block';
+    }
+
+    function siRowHasSampleSubmitted(siRow) {
+      const key = findKey(siRow, ['sample submission']);
+      if (!key) return false;
+      return String(siRow[key] ?? '').trim().toLowerCase() === 'sample submitted to lab';
+    }
+
+    function updateSampleSubmissionNote() {
+      if (!sampleSubmissionNote) return;
+      if (currentDetailsTab !== 'drillhole' || currentTopLevelTab !== 'assay' || !Array.isArray(drillholePoints) || !drillholePoints.length) {
+        sampleSubmissionNote.style.display = 'none';
+        return;
+      }
+      const total = drillholePoints.length;
+      const holesSubmitted = drillholePoints
+        .filter((point) => (siDataMap[point.drillholeId] || []).some(siRowHasSampleSubmitted))
+        .sort((a, b) => String(a.drillholeLabel).localeCompare(String(b.drillholeLabel), undefined, { numeric: true }));
+
+      sampleSubmissionText.innerHTML = `<strong>${holesSubmitted.length} of ${total}</strong> drillholes have samples submitted to the lab.`;
+
+      const previousValue = sampleSubmissionSelect.value;
+      sampleSubmissionSelect.innerHTML = '<option value="">Choose hole</option>' +
+        holesSubmitted.map((point) => `<option value="${point.id}">${formatValue(point.drillholeLabel)}</option>`).join('');
+      sampleSubmissionSelect.value = holesSubmitted.some((point) => point.id === previousValue) ? previousValue : '';
+
+      sampleSubmissionNote.style.display = 'block';
     }
 
     function renderTopLevelEmptyState() {
@@ -2264,6 +2368,7 @@
             : tabButton.dataset.topTab === currentTopLevelTab);
       });
       updateAssayCoverageNote();
+      updateSampleSubmissionNote();
       updateStatusSummary();
       if (currentDetailsTab === 'drillpad' && currentSelectedDrillpadFeature) {
         syncSelectedDrillpadLayer(currentSelectedDrillpadFeature);
@@ -2293,6 +2398,7 @@
         tabButton.classList.toggle('is-active', tabButton.dataset.topTab === currentTopLevelTab);
       });
       updateAssayCoverageNote();
+      updateSampleSubmissionNote();
       if (currentTopLevelTab === 'geology') {
         syncGeologyFromWorkbook();
       }
@@ -3569,6 +3675,13 @@
             siHeader.innerHTML = '<strong>Significant Intercepts</strong><span>' + significantInterceptsCount + '</span>';
             assayCard.appendChild(siHeader);
 
+            if (siRows.some(siRowHasSampleSubmitted)) {
+              const submittedNote = document.createElement('div');
+              submittedNote.className = 'panel-note sample-submitted-note';
+              submittedNote.innerHTML = '<strong>Samples submitted to the lab</strong> — assay results pending.';
+              assayCard.appendChild(submittedNote);
+            }
+
             const siNote = document.createElement('div');
             siNote.className = 'panel-note';
             siNote.textContent = `Significant assay intercepts for hole ${drillholeName} reported at a cut-off grade of ≥ 0.15 g/t Au with a maximum internal dilution of 5 ft`;
@@ -3935,6 +4048,7 @@
       updateStatusSummary();
       syncGeologyFromWorkbook();
       updateAssayCoverageNote();
+      updateSampleSubmissionNote();
     }
 
     function processActualDepths(rows) {
@@ -4079,7 +4193,17 @@
 
     if (assayCoverageToggle) {
       assayCoverageToggle.addEventListener('click', () => {
-        assayCoverageNote.classList.toggle('is-expanded');
+        const willExpand = !assayCoverageNote.classList.contains('is-expanded');
+        if (sampleSubmissionNote) sampleSubmissionNote.classList.remove('is-expanded');
+        assayCoverageNote.classList.toggle('is-expanded', willExpand);
+      });
+    }
+
+    if (sampleSubmissionToggle) {
+      sampleSubmissionToggle.addEventListener('click', () => {
+        const willExpand = !sampleSubmissionNote.classList.contains('is-expanded');
+        if (assayCoverageNote) assayCoverageNote.classList.remove('is-expanded');
+        sampleSubmissionNote.classList.toggle('is-expanded', willExpand);
       });
     }
 
@@ -4095,6 +4219,16 @@
       });
     }
 
+    if (sampleSubmissionSelect) {
+      sampleSubmissionSelect.addEventListener('change', (event) => {
+        const point = drillholePoints.find((item) => item.id === event.target.value);
+        if (point) {
+          drillholeSelect.value = point.id;
+          zoomToDrillhole(point);
+        }
+      });
+    }
+
     initMap();
     updateStatusSummary();
     setTopLevelTab('survey');
@@ -4102,7 +4236,7 @@
     messages.textContent = 'Load Hog_Ranch.xlsm and optionally Pads/Tenement shapefiles (.zip/.geojson) to overlay spatial context.';
     syncGeologyFromWorkbook();
   </script>
-<script src="unlock.js"></script>
-<script src="autoload.js"></script>
+  <script src="unlock.js"></script>
+  <script src="autoload.js"></script>
 </body>
 </html>
