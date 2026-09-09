@@ -1351,10 +1351,10 @@
             <div id="statusPieChartDD" class="status-pie"></div>
             <div id="statusSummaryContentDD" class="status-summary-list"></div>
           </div>
-          <div class="status-subheading">Planned (All)</div>
+          <div class="status-subheading">Total Target DH (2026)</div>
           <div class="status-total-row">
-            <span class="status-summary-label"><span class="status-dot status-dot-planned"></span>Planned</span>
-            <strong class="status-summary-count" id="statusPlannedTotalCount">–</strong>
+            <span class="status-summary-label"><span class="status-dot status-dot-planned"></span>Total Target DH (2026)</span>
+            <strong class="status-summary-count" id="statusPlannedTotalCount">120</strong>
           </div>
         </div>
         <div id="drillpadStatusGroup" style="display:none;">
@@ -2087,13 +2087,9 @@
     }
 
     function updatePlannedTotal(points) {
+      // "Total Target DH (2026)" is a fixed annual target; keep it static at 120.
       if (!statusPlannedTotalCount) return;
-      if (!points.length) {
-        statusPlannedTotalCount.textContent = '–';
-        return;
-      }
-      const planned = points.filter((point) => point.status === 'planned').length;
-      statusPlannedTotalCount.textContent = String(planned);
+      statusPlannedTotalCount.textContent = '120';
     }
 
     function updateStatusSummary() {
@@ -2500,6 +2496,15 @@
         selectedDailyTotalsDate = getDefaultDailyTotalsDate(dateOptions);
       }
 
+      const lastFootageDataDate = getLastFootageDataDate();
+      const lastFootageDataDisplay = lastFootageDataDate
+        ? new Date(`${lastFootageDataDate}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+        : '';
+
+      const geometryDateNote = lastFootageDataDisplay
+        ? `<div class="data-availability-note" style="margin-top: 6px; padding: 0; background: none; border: none; border-radius: 0; font-size: 0.7rem; text-align: center;">Data available through ${lastFootageDataDisplay}</div>`
+        : '<div class="panel-note" style="margin-top: 6px; font-size: 0.7rem; text-align: center;">No footage data available</div>';
+
       const calendarCard = dateOptions.length ? `
         <div class="detail-card">
           <div class="status-subheading">Metrics Date</div>
@@ -2512,21 +2517,12 @@
               ${dateOptions.length ? `min="${dateOptions[0]}" max="${dateOptions[dateOptions.length - 1]}"` : ''}
               style="width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 12px; background: rgba(67, 51, 28, 0.18); border: 1px solid rgba(160, 166, 120, 0.25); font-weight: 700; text-align: center; color: #f5f8ff; font-size: 0.95rem; cursor: pointer; color-scheme: dark;"
             />
+            ${geometryDateNote}
           </div>
         </div>
       ` : '';
 
-      const lastFootageDataDate = getLastFootageDataDate();
-      const lastFootageDataDisplay = lastFootageDataDate
-        ? new Date(`${lastFootageDataDate}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
-        : '';
-
-      const geometryDateNote = lastFootageDataDisplay
-        ? `<div class="data-availability-note">Data available through ${lastFootageDataDisplay}</div>`
-        : '<div class="panel-note">No footage data available</div>';
-
       const summaryCard = `
-        ${geometryDateNote}
         <div class="detail-card depth-summary-card">
           ${buildDepthSummarySection('RC (in ft)', getCompletedActualDepthValues('RC', selectedDailyTotalsDate))}
           <div class="metric-divider" aria-hidden="true"></div>
@@ -4236,7 +4232,7 @@
     messages.textContent = 'Load Hog_Ranch.xlsm and optionally Pads/Tenement shapefiles (.zip/.geojson) to overlay spatial context.';
     syncGeologyFromWorkbook();
   </script>
-<script src="unlock.js"></script>
-<script src="autoload.js"></script>
+  <script src="unlock.js"></script>
+  <script src="autoload.js"></script>
 </body>
 </html>
