@@ -351,27 +351,27 @@
     }
 
     .drillpad-action-dot {
-      width: 10px;
+      width: 16px;
       height: 10px;
-      border-radius: 999px;
-      flex: 0 0 10px;
+      border-radius: 2px;
+      flex: 0 0 16px;
       box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12);
     }
 
-    .drillpad-action-dot.built {
+    .drillpad-action-dot.retain-epo {
       background: #5CB85C;
     }
 
-    .drillpad-action-dot.building {
-      background: #3498DB;
+    .drillpad-action-dot.remove-epo {
+      background: #4D4D4D;
     }
 
-    .drillpad-action-dot.old-pending-approval {
+    .drillpad-action-dot.planned-work {
       background: #E67E22;
     }
 
-    .drillpad-action-dot.new {
-      background: #F1C40F;
+    .drillpad-action-dot.remove-planned-work {
+      background: #E74C3C;
     }
 
     .status-chip {
@@ -992,9 +992,9 @@
     .status-summary {
       display: grid;
       grid-template-columns: auto 1fr;
-      gap: 12px;
+      gap: 14px;
       align-items: center;
-      padding: 10px 4px;
+      padding: 6px 2px;
     }
 
     #drillholeStatusGroups {
@@ -1012,8 +1012,32 @@
     }
 
     #drillholeStatusGroups .status-subheading:not(:first-child) {
+      margin-top: 6px;
       padding-top: 12px;
       border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .status-target {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      margin: 4px 2px 0;
+      padding-top: 8px;
+      border-top: 1px dashed rgba(160, 166, 120, 0.28);
+      font-size: 0.78rem;
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .status-target strong {
+      color: #f5f8ff;
+      font-weight: 700;
+      font-size: 0.95rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .status-target:empty {
+      display: none;
     }
 
     .status-total-row {
@@ -1032,18 +1056,18 @@
     }
 
     .status-pie {
-      width: 92px;
-      height: 92px;
+      width: 72px;
+      height: 72px;
       border-radius: 50%;
       position: relative;
       background: conic-gradient(#43331C 0deg 0deg, #A0A678 0deg 360deg);
-      box-shadow: inset 0 0 0 7px rgba(255,255,255,0.06);
+      box-shadow: inset 0 0 0 5px rgba(255,255,255,0.06);
     }
 
     .status-pie::after {
       content: '';
       position: absolute;
-      inset: 12px;
+      inset: 9px;
       border-radius: 50%;
       background: rgba(11, 52, 70, 0.18);
       border: 1px solid rgba(255,255,255,0.08);
@@ -1051,7 +1075,7 @@
 
     .status-summary-list {
       display: grid;
-      gap: 8px;
+      gap: 5px;
     }
 
     .status-summary-item {
@@ -1059,7 +1083,7 @@
       grid-template-columns: minmax(0, 1fr) auto auto;
       column-gap: 8px;
       align-items: start;
-      font-size: 0.94rem;
+      font-size: 0.85rem;
     }
 
     .status-summary-label {
@@ -1110,6 +1134,14 @@
       transform: translateZ(0);
       overflow: hidden;
       margin-right: 6px;
+    }
+
+    .status-dot--rect {
+      width: 16px;
+      min-width: 16px;
+      flex: 0 0 16px;
+      aspect-ratio: auto;
+      border-radius: 2px;
     }
 
     .status-dot-complete {
@@ -1331,10 +1363,10 @@
         <div id="drillpadActionLegend" class="drillpad-action-legend details-panel" aria-label="Drillpad action color legend">
           <p class="drillpad-action-legend-title">Drillpad Status Colors</p>
           <div class="drillpad-action-legend-items">
-            <span class="drillpad-action-legend-item"><span class="drillpad-action-dot built"></span>Built</span>
-            <span class="drillpad-action-legend-item"><span class="drillpad-action-dot building"></span>Building</span>
-            <span class="drillpad-action-legend-item"><span class="drillpad-action-dot old-pending-approval"></span>Old - Pending Approval</span>
-            <span class="drillpad-action-legend-item"><span class="drillpad-action-dot new"></span>New</span>
+            <span class="drillpad-action-legend-item"><span class="drillpad-action-dot retain-epo"></span>Retain - EPO Ph1</span>
+            <span class="drillpad-action-legend-item"><span class="drillpad-action-dot remove-epo"></span>Remove - EPO Ph1</span>
+            <span class="drillpad-action-legend-item"><span class="drillpad-action-dot planned-work"></span>Planned - Proposed Work Plan</span>
+            <span class="drillpad-action-legend-item"><span class="drillpad-action-dot remove-planned-work"></span>Removed Planned - Proposed Work Plan</span>
           </div>
         </div>
       </div>
@@ -1346,16 +1378,13 @@
             <div id="statusPieChartRC" class="status-pie"></div>
             <div id="statusSummaryContentRC" class="status-summary-list"></div>
           </div>
+          <div id="statusTargetRC" class="status-target"></div>
           <div class="status-subheading">Core</div>
           <div class="status-summary">
             <div id="statusPieChartDD" class="status-pie"></div>
             <div id="statusSummaryContentDD" class="status-summary-list"></div>
           </div>
-          <div class="status-subheading">Total Target DH (2026)</div>
-          <div class="status-total-row">
-            <span class="status-summary-label"><span class="status-dot status-dot-planned"></span>Total Target DH (2026)</span>
-            <strong class="status-summary-count" id="statusPlannedTotalCount">120</strong>
-          </div>
+          <div id="statusTargetDD" class="status-target"></div>
         </div>
         <div id="drillpadStatusGroup" style="display:none;">
           <div class="status-summary">
@@ -1441,7 +1470,8 @@
     const statusSummaryContentRC = document.getElementById('statusSummaryContentRC');
     const statusPieChartDD = document.getElementById('statusPieChartDD');
     const statusSummaryContentDD = document.getElementById('statusSummaryContentDD');
-    const statusPlannedTotalCount = document.getElementById('statusPlannedTotalCount');
+    const statusTargetRC = document.getElementById('statusTargetRC');
+    const statusTargetDD = document.getElementById('statusTargetDD');
     const statusFilterControls = document.getElementById('statusFilterControls');
     const geometryMetricsTitle = document.getElementById('geometryMetricsTitle');
     let map;
@@ -1682,11 +1712,24 @@
       map.fitBounds(bounds, { padding: [30, 30] });
     }
 
+    const DRILLPAD_POINT_WIDTH_METERS = 44;
+    const DRILLPAD_POINT_LENGTH_METERS = 26;
+
+    function drillpadPointBounds(latlng) {
+      const halfLat = (DRILLPAD_POINT_LENGTH_METERS / 2) / 111320;
+      const cosLat = Math.max(Math.cos(latlng.lat * Math.PI / 180), 1e-6);
+      const halfLng = (DRILLPAD_POINT_WIDTH_METERS / 2) / (111320 * cosLat);
+      return L.latLngBounds(
+        [latlng.lat - halfLat, latlng.lng - halfLng],
+        [latlng.lat + halfLat, latlng.lng + halfLng]
+      );
+    }
+
     const drillpadActionColors = {
-      'built': '#5CB85C',
-      'building': '#3498DB',
-      'old - pending approval': '#E67E22',
-      'new': '#F1C40F',
+      'retain - epo ph1': '#5CB85C',
+      'remove - epo ph1': '#4D4D4D',
+      'planned - proposed work plan': '#E67E22',
+      'remove planned - proposed work plan': '#E74C3C',
     };
 
     function normalizeDrillpadAction(rawAction) {
@@ -1694,12 +1737,13 @@
         .trim()
         .toLowerCase()
         .replace(/\s*-\s*/g, ' - ')
-        .replace(/\s+/g, ' ');
+        .replace(/\s+/g, ' ')
+        .replace(/([a-z])\s+(\d)/g, '$1$2');
     }
 
     function getDrillpadActionColor(feature) {
       const properties = feature?.properties || {};
-      const rawAction = properties.Status ?? properties.status ?? properties.STATUS ?? properties.Action ?? properties.action ?? properties.ACTION ?? '';
+      const rawAction = properties.Status ?? properties.status ?? properties.STATUS ?? '';
       const normalized = normalizeDrillpadAction(rawAction);
       return drillpadActionColors[normalized] || '#7FDBFF';
     }
@@ -1722,11 +1766,11 @@
       if (geometryType.includes('Point')) {
         return {
           pane: 'drillpadPane',
-          radius: isSelected ? 7 : 5,
           color: actionColor,
           weight: isSelected ? 3 : 2,
+          opacity: 0.95,
           fillColor: actionColor,
-          fillOpacity: isSelected ? 0.75 : 0.5,
+          fillOpacity: isSelected ? 0.5 : 0.3,
         };
       }
 
@@ -1799,7 +1843,7 @@
 
       shapefileLayer = L.geoJSON(featureCollection, {
         style: (feature) => getDrillpadLayerStyle(feature, false),
-        pointToLayer: (feature, latlng) => L.circleMarker(latlng, getDrillpadLayerStyle(feature, false)),
+        pointToLayer: (feature, latlng) => L.rectangle(drillpadPointBounds(latlng), getDrillpadLayerStyle(feature, false)),
         onEachFeature: (feature, layer) => {
           layer.on('click', () => {
             currentSelectedDrillpadFeature = feature || null;
@@ -2051,12 +2095,22 @@
       updateDetails(point);
     }
 
-    function renderStatusGroup(pieEl, listEl, points, emptyMessage) {
+    function renderStatusGroup(pieEl, listEl, targetEl, points, emptyMessage, target) {
       if (!pieEl || !listEl) return;
 
       const completed = points.filter((point) => point.status === 'completed').length;
       const active = points.filter((point) => point.status === 'active').length;
       const total = completed + active;
+
+      // Percentages and the pie are measured against the fixed 2026 target when one
+      // is supplied (120 for RC, 8 for Core), so "Completed" can read above 100%.
+      const denominator = target || total;
+
+      if (targetEl) {
+        targetEl.innerHTML = target
+          ? `<span>Total Target DH (2026)</span><strong>${target}</strong>`
+          : '';
+      }
 
       if (!total) {
         pieEl.style.background = 'conic-gradient(#43331C 0deg 0deg, #A0A678 0deg 360deg)';
@@ -2065,13 +2119,15 @@
         return;
       }
 
-      const completedAngle = (completed / total) * 360;
-      const completedPct = Math.round((completed / total) * 100);
-      const activePct = 100 - completedPct;
+      const completedAngle = Math.min(completed / denominator, 1) * 360;
+      const activeEndAngle = Math.min((completed + active) / denominator, 1) * 360;
+      const completedPct = Math.round((completed / denominator) * 100);
+      const activePct = Math.round((active / denominator) * 100);
       const completedColor = getStatusColor('completed');
       const activeColor = getStatusColor('active');
+      const remainingColor = getStatusColor('planned');
 
-      pieEl.style.background = `conic-gradient(${completedColor} 0deg ${completedAngle}deg, ${activeColor} ${completedAngle}deg 360deg)`;
+      pieEl.style.background = `conic-gradient(${completedColor} 0deg ${completedAngle}deg, ${activeColor} ${completedAngle}deg ${activeEndAngle}deg, ${remainingColor} ${activeEndAngle}deg 360deg)`;
       listEl.innerHTML = `
         <div class="status-summary-item">
           <span class="status-summary-label"><span class="status-dot status-dot-complete"></span>Completed</span>
@@ -2084,12 +2140,6 @@
           <span class="status-summary-pct">(${activePct}%)</span>
         </div>
       `;
-    }
-
-    function updatePlannedTotal(points) {
-      // "Total Target DH (2026)" is a fixed annual target; keep it static at 120.
-      if (!statusPlannedTotalCount) return;
-      statusPlannedTotalCount.textContent = '120';
     }
 
     function updateStatusSummary() {
@@ -2110,61 +2160,57 @@
         const features = (loadedShapeGeoJson && Array.isArray(loadedShapeGeoJson.features)) ? loadedShapeGeoJson.features : [];
         if (!features.length) {
           statusPieChart.style.background = 'conic-gradient(#6B7280 0deg 0deg, #A0A678 0deg 360deg)';
-          statusSummaryContent.innerHTML = '<div class="panel-note">Load a drillpad shapefile to view Built, Building, Old - Pending Approval, and New totals.</div>';
+          statusSummaryContent.innerHTML = '<div class="panel-note">Load a drillpad shapefile to view Retain - EPO Ph1, Remove - EPO Ph1, Planned - Proposed Work Plan, and Removed Planned - Proposed Work Plan totals.</div>';
           return;
         }
 
-        const tally = { built: 0, building: 0, pending: 0, new: 0, other: 0 };
+        const tally = { retainEpo: 0, removeEpo: 0, plannedWork: 0, removePlannedWork: 0 };
         features.forEach((feature) => {
-          const rawAction = feature?.properties?.Status ?? feature?.properties?.status ?? feature?.properties?.STATUS ?? feature?.properties?.Action ?? feature?.properties?.action ?? feature?.properties?.ACTION ?? '';
+          const rawAction = feature?.properties?.Status ?? feature?.properties?.status ?? feature?.properties?.STATUS ?? '';
           const normalized = normalizeDrillpadAction(rawAction);
-          if (normalized === 'built') tally.built += 1;
-          else if (normalized === 'building') tally.building += 1;
-          else if (normalized === 'old - pending approval') tally.pending += 1;
-          else if (normalized === 'new') tally.new += 1;
-          else tally.other += 1;
+          if (normalized === 'retain - epo ph1') tally.retainEpo += 1;
+          else if (normalized === 'remove - epo ph1') tally.removeEpo += 1;
+          else if (normalized === 'planned - proposed work plan') tally.plannedWork += 1;
+          else if (normalized === 'removed planned - proposed work plan') tally.removePlannedWork += 1;
         });
 
-        const total = tally.built + tally.building + tally.pending + tally.new + tally.other;
+        const total = tally.retainEpo + tally.removeEpo + tally.plannedWork + tally.removePlannedWork;
         if (!total) {
           statusPieChart.style.background = 'conic-gradient(#6B7280 0deg 0deg, #A0A678 0deg 360deg)';
-          statusSummaryContent.innerHTML = '<div class="panel-note">No drillpad Action values were found in the loaded shapefile.</div>';
+          statusSummaryContent.innerHTML = '<div class="panel-note">No drillpad Status values were found in the loaded shapefile.</div>';
           return;
         }
 
-        const builtAngle = (tally.built / total) * 360;
-        const buildingAngle = ((tally.built + tally.building) / total) * 360;
-        const pendingAngle = ((tally.built + tally.building + tally.pending) / total) * 360;
-        const newAngle = ((tally.built + tally.building + tally.pending + tally.new) / total) * 360;
-        const builtPct = Math.round((tally.built / total) * 100);
-        const buildingPct = Math.round((tally.building / total) * 100);
-        const pendingPct = Math.round((tally.pending / total) * 100);
-        const newPct = Math.round((tally.new / total) * 100);
-        const otherPct = 100 - builtPct - buildingPct - pendingPct - newPct;
+        const retainAngle = (tally.retainEpo / total) * 360;
+        const removeEpoAngle = ((tally.retainEpo + tally.removeEpo) / total) * 360;
+        const plannedAngle = ((tally.retainEpo + tally.removeEpo + tally.plannedWork) / total) * 360;
+        const retainPct = Math.round((tally.retainEpo / total) * 100);
+        const removeEpoPct = Math.round((tally.removeEpo / total) * 100);
+        const plannedPct = Math.round((tally.plannedWork / total) * 100);
+        const removePlannedPct = 100 - retainPct - removeEpoPct - plannedPct;
 
-        statusPieChart.style.background = `conic-gradient(#5CB85C 0deg ${builtAngle}deg, #3498DB ${builtAngle}deg ${buildingAngle}deg, #E67E22 ${buildingAngle}deg ${pendingAngle}deg, #F1C40F ${pendingAngle}deg ${newAngle}deg, #6B7280 ${newAngle}deg 360deg)`;
+        statusPieChart.style.background = `conic-gradient(#5CB85C 0deg ${retainAngle}deg, #4D4D4D ${retainAngle}deg ${removeEpoAngle}deg, #E67E22 ${removeEpoAngle}deg ${plannedAngle}deg, #E74C3C ${plannedAngle}deg 360deg)`;
         statusSummaryContent.innerHTML = `
           <div class="status-summary-item">
-            <span class="status-summary-label"><span class="status-dot" style="background:#5CB85C"></span>Built</span>
-            <strong class="status-summary-count">${tally.built}</strong>
-            <span class="status-summary-pct">(${builtPct}%)</span>
+            <span class="status-summary-label"><span class="status-dot status-dot--rect" style="background:#5CB85C"></span>Retain - EPO Ph1</span>
+            <strong class="status-summary-count">${tally.retainEpo}</strong>
+            <span class="status-summary-pct">(${retainPct}%)</span>
           </div>
           <div class="status-summary-item">
-            <span class="status-summary-label"><span class="status-dot" style="background:#3498DB"></span>Building</span>
-            <strong class="status-summary-count">${tally.building}</strong>
-            <span class="status-summary-pct">(${buildingPct}%)</span>
+            <span class="status-summary-label"><span class="status-dot status-dot--rect" style="background:#4D4D4D"></span>Remove - EPO Ph1</span>
+            <strong class="status-summary-count">${tally.removeEpo}</strong>
+            <span class="status-summary-pct">(${removeEpoPct}%)</span>
           </div>
           <div class="status-summary-item">
-            <span class="status-summary-label"><span class="status-dot" style="background:#E67E22"></span>Old - Pending Approval</span>
-            <strong class="status-summary-count">${tally.pending}</strong>
-            <span class="status-summary-pct">(${pendingPct}%)</span>
+            <span class="status-summary-label"><span class="status-dot status-dot--rect" style="background:#E67E22"></span>Planned - Proposed Work Plan</span>
+            <strong class="status-summary-count">${tally.plannedWork}</strong>
+            <span class="status-summary-pct">(${plannedPct}%)</span>
           </div>
           <div class="status-summary-item">
-            <span class="status-summary-label"><span class="status-dot" style="background:#F1C40F"></span>New</span>
-            <strong class="status-summary-count">${tally.new}</strong>
-            <span class="status-summary-pct">(${newPct}%)</span>
+            <span class="status-summary-label"><span class="status-dot status-dot--rect" style="background:#E74C3C"></span>Removed Planned - Proposed Work Plan</span>
+            <strong class="status-summary-count">${tally.removePlannedWork}</strong>
+            <span class="status-summary-pct">(${removePlannedPct}%)</span>
           </div>
-          ${tally.other ? `<div class="status-summary-item"><span class="status-summary-label"><span class="status-dot" style="background:#6B7280"></span>Other</span><strong class="status-summary-count">${tally.other}</strong><span class="status-summary-pct">(${otherPct}%)</span></div>` : ''}
         `;
         return;
       }
@@ -2181,9 +2227,8 @@
         ? 'No holes of this type found.'
         : 'Load a workbook to view completion totals.';
 
-      renderStatusGroup(statusPieChartRC, statusSummaryContentRC, rcPoints, emptyMessage);
-      renderStatusGroup(statusPieChartDD, statusSummaryContentDD, ddPoints, emptyMessage);
-      updatePlannedTotal(points);
+      renderStatusGroup(statusPieChartRC, statusSummaryContentRC, statusTargetRC, rcPoints, emptyMessage, 120);
+      renderStatusGroup(statusPieChartDD, statusSummaryContentDD, statusTargetDD, ddPoints, emptyMessage, 8);
     }
 
     function applyStatusFilter() {
@@ -4232,7 +4277,7 @@
     messages.textContent = 'Load Hog_Ranch.xlsm and optionally Pads/Tenement shapefiles (.zip/.geojson) to overlay spatial context.';
     syncGeologyFromWorkbook();
   </script>
-<script src="unlock.js"></script>
-<script src="autoload.js"></script>
+  <script src="unlock.js"></script>
+  <script src="autoload.js"></script>
 </body>
 </html>
