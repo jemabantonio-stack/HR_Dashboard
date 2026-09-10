@@ -370,10 +370,6 @@
       background: #E67E22;
     }
 
-    .drillpad-action-dot.remove-planned-work {
-      background: #E74C3C;
-    }
-
     .status-chip {
       display: inline-flex;
       align-items: center;
@@ -1365,8 +1361,7 @@
           <div class="drillpad-action-legend-items">
             <span class="drillpad-action-legend-item"><span class="drillpad-action-dot retain-epo"></span>Retain - EPO Ph1</span>
             <span class="drillpad-action-legend-item"><span class="drillpad-action-dot remove-epo"></span>Remove - EPO Ph1</span>
-            <span class="drillpad-action-legend-item"><span class="drillpad-action-dot planned-work"></span>Planned - Proposed Work Plan</span>
-            <span class="drillpad-action-legend-item"><span class="drillpad-action-dot remove-planned-work"></span>Removed Planned - Proposed Work Plan</span>
+            <span class="drillpad-action-legend-item"><span class="drillpad-action-dot planned-work"></span>Removed/Planned - Proposed Work Plan</span>
           </div>
         </div>
       </div>
@@ -1729,7 +1724,9 @@
       'retain - epo ph1': '#5CB85C',
       'remove - epo ph1': '#4D4D4D',
       'planned - proposed work plan': '#E67E22',
-      'remove planned - proposed work plan': '#E74C3C',
+      'remove planned - proposed work plan': '#E67E22',
+      'removed planned - proposed work plan': '#E67E22',
+      'removed/planned - proposed work plan': '#E67E22',
     };
 
     function normalizeDrillpadAction(rawAction) {
@@ -2160,21 +2157,25 @@
         const features = (loadedShapeGeoJson && Array.isArray(loadedShapeGeoJson.features)) ? loadedShapeGeoJson.features : [];
         if (!features.length) {
           statusPieChart.style.background = 'conic-gradient(#6B7280 0deg 0deg, #A0A678 0deg 360deg)';
-          statusSummaryContent.innerHTML = '<div class="panel-note">Load a drillpad shapefile to view Retain - EPO Ph1, Remove - EPO Ph1, Planned - Proposed Work Plan, and Removed Planned - Proposed Work Plan totals.</div>';
+          statusSummaryContent.innerHTML = '<div class="panel-note">Load a drillpad shapefile to view Retain - EPO Ph1, Remove - EPO Ph1, and Removed/Planned - Proposed Work Plan totals.</div>';
           return;
         }
 
-        const tally = { retainEpo: 0, removeEpo: 0, plannedWork: 0, removePlannedWork: 0 };
+        const tally = { retainEpo: 0, removeEpo: 0, plannedWork: 0 };
         features.forEach((feature) => {
           const rawAction = feature?.properties?.Status ?? feature?.properties?.status ?? feature?.properties?.STATUS ?? '';
           const normalized = normalizeDrillpadAction(rawAction);
           if (normalized === 'retain - epo ph1') tally.retainEpo += 1;
           else if (normalized === 'remove - epo ph1') tally.removeEpo += 1;
-          else if (normalized === 'planned - proposed work plan') tally.plannedWork += 1;
-          else if (normalized === 'removed planned - proposed work plan') tally.removePlannedWork += 1;
+          else if (
+            normalized === 'planned - proposed work plan'
+            || normalized === 'remove planned - proposed work plan'
+            || normalized === 'removed planned - proposed work plan'
+            || normalized === 'removed/planned - proposed work plan'
+          ) tally.plannedWork += 1;
         });
 
-        const total = tally.retainEpo + tally.removeEpo + tally.plannedWork + tally.removePlannedWork;
+        const total = tally.retainEpo + tally.removeEpo + tally.plannedWork;
         if (!total) {
           statusPieChart.style.background = 'conic-gradient(#6B7280 0deg 0deg, #A0A678 0deg 360deg)';
           statusSummaryContent.innerHTML = '<div class="panel-note">No drillpad Status values were found in the loaded shapefile.</div>';
@@ -2183,13 +2184,11 @@
 
         const retainAngle = (tally.retainEpo / total) * 360;
         const removeEpoAngle = ((tally.retainEpo + tally.removeEpo) / total) * 360;
-        const plannedAngle = ((tally.retainEpo + tally.removeEpo + tally.plannedWork) / total) * 360;
         const retainPct = Math.round((tally.retainEpo / total) * 100);
         const removeEpoPct = Math.round((tally.removeEpo / total) * 100);
-        const plannedPct = Math.round((tally.plannedWork / total) * 100);
-        const removePlannedPct = 100 - retainPct - removeEpoPct - plannedPct;
+        const plannedPct = 100 - retainPct - removeEpoPct;
 
-        statusPieChart.style.background = `conic-gradient(#5CB85C 0deg ${retainAngle}deg, #4D4D4D ${retainAngle}deg ${removeEpoAngle}deg, #E67E22 ${removeEpoAngle}deg ${plannedAngle}deg, #E74C3C ${plannedAngle}deg 360deg)`;
+        statusPieChart.style.background = `conic-gradient(#5CB85C 0deg ${retainAngle}deg, #4D4D4D ${retainAngle}deg ${removeEpoAngle}deg, #E67E22 ${removeEpoAngle}deg 360deg)`;
         statusSummaryContent.innerHTML = `
           <div class="status-summary-item">
             <span class="status-summary-label"><span class="status-dot status-dot--rect" style="background:#5CB85C"></span>Retain - EPO Ph1</span>
@@ -2202,14 +2201,9 @@
             <span class="status-summary-pct">(${removeEpoPct}%)</span>
           </div>
           <div class="status-summary-item">
-            <span class="status-summary-label"><span class="status-dot status-dot--rect" style="background:#E67E22"></span>Planned - Proposed Work Plan</span>
+            <span class="status-summary-label"><span class="status-dot status-dot--rect" style="background:#E67E22"></span>Removed/Planned - Proposed Work Plan</span>
             <strong class="status-summary-count">${tally.plannedWork}</strong>
             <span class="status-summary-pct">(${plannedPct}%)</span>
-          </div>
-          <div class="status-summary-item">
-            <span class="status-summary-label"><span class="status-dot status-dot--rect" style="background:#E74C3C"></span>Removed Planned - Proposed Work Plan</span>
-            <strong class="status-summary-count">${tally.removePlannedWork}</strong>
-            <span class="status-summary-pct">(${removePlannedPct}%)</span>
           </div>
         `;
         return;
@@ -4277,7 +4271,7 @@
     messages.textContent = 'Load Hog_Ranch.xlsm and optionally Pads/Tenement shapefiles (.zip/.geojson) to overlay spatial context.';
     syncGeologyFromWorkbook();
   </script>
-<script src="unlock.js"></script>
-<script src="autoload.js"></script>
+  <script src="unlock.js"></script>
+  <script src="autoload.js"></script>
 </body>
 </html>
