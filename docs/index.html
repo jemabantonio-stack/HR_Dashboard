@@ -2100,7 +2100,7 @@
       const total = completed + active;
 
       // Percentages and the pie are measured against the fixed 2026 target when one
-      // is supplied (120 for RC, 8 for Core), so "Completed" can read above 100%.
+      // is supplied (150 for RC, 8 for Core), so "Completed" can read above 100%.
       const denominator = target || total;
 
       if (targetEl) {
@@ -2221,7 +2221,7 @@
         ? 'No holes of this type found.'
         : 'Load a workbook to view completion totals.';
 
-      renderStatusGroup(statusPieChartRC, statusSummaryContentRC, statusTargetRC, rcPoints, emptyMessage, 120);
+      renderStatusGroup(statusPieChartRC, statusSummaryContentRC, statusTargetRC, rcPoints, emptyMessage, 150);
       renderStatusGroup(statusPieChartDD, statusSummaryContentDD, statusTargetDD, ddPoints, emptyMessage, 8);
     }
 
@@ -4271,7 +4271,7 @@
     messages.textContent = 'Load Hog_Ranch.xlsm and optionally Pads/Tenement shapefiles (.zip/.geojson) to overlay spatial context.';
     syncGeologyFromWorkbook();
   </script>
-<script src="unlock.js"></script>
-<script src="autoload.js"></script>
+  <script src="unlock.js"></script>
+  <script src="autoload.js"></script>
 </body>
 </html>
