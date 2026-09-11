@@ -216,6 +216,15 @@
       loadedTenementGeoJson = normalized;
       renderTenementLayer(loadedTenementGeoJson, fitToLayer);
     } else {
+      if (typeof normalizeDrillpadAction === 'function') {
+        normalized = Object.assign({}, normalized, {
+          features: normalized.features.filter(function (feature) {
+            var props = (feature && feature.properties) || {};
+            var rawAction = props.Status != null ? props.Status : (props.status != null ? props.status : props.STATUS);
+            return normalizeDrillpadAction(rawAction) !== 'rejected - proposed work plan';
+          })
+        });
+      }
       loadedShapeGeoJson = normalized;
       renderShapeLayer(loadedShapeGeoJson, fitToLayer);
       updateStatusSummary();
