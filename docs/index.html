@@ -348,6 +348,12 @@
       font-size: 0.85rem;
       color: rgba(245, 248, 255, 0.92);
       font-weight: 600;
+      cursor: pointer;
+    }
+
+    .drillpad-action-legend-item input[type="checkbox"] {
+      cursor: pointer;
+      accent-color: #A0A678;
     }
 
     .drillpad-action-dot {
@@ -1358,10 +1364,10 @@
         </div>
         <div id="drillpadActionLegend" class="drillpad-action-legend details-panel" aria-label="Drillpad action color legend">
           <p class="drillpad-action-legend-title">Drillpad Status Colors</p>
-          <div class="drillpad-action-legend-items">
-            <span class="drillpad-action-legend-item"><span class="drillpad-action-dot retain-epo"></span>Retain - EPO Ph1</span>
-            <span class="drillpad-action-legend-item"><span class="drillpad-action-dot remove-epo"></span>Remove - EPO Ph1</span>
-            <span class="drillpad-action-legend-item"><span class="drillpad-action-dot planned-work"></span>Planned - Proposed Work Plan</span>
+          <div class="drillpad-action-legend-items" id="drillpadStatusFilterControls">
+            <label class="drillpad-action-legend-item"><input type="checkbox" class="drillpad-status-toggle" data-status="retain - epo ph1" checked><span class="drillpad-action-dot retain-epo"></span>Retain - EPO Ph1</label>
+            <label class="drillpad-action-legend-item"><input type="checkbox" class="drillpad-status-toggle" data-status="remove - epo ph1" checked><span class="drillpad-action-dot remove-epo"></span>Remove - EPO Ph1</label>
+            <label class="drillpad-action-legend-item"><input type="checkbox" class="drillpad-status-toggle" data-status="planned - proposed work plan" checked><span class="drillpad-action-dot planned-work"></span>Planned - Proposed Work Plan</label>
           </div>
         </div>
       </div>
@@ -1468,6 +1474,7 @@
     const statusTargetRC = document.getElementById('statusTargetRC');
     const statusTargetDD = document.getElementById('statusTargetDD');
     const statusFilterControls = document.getElementById('statusFilterControls');
+    const drillpadStatusFilterControls = document.getElementById('drillpadStatusFilterControls');
     const geometryMetricsTitle = document.getElementById('geometryMetricsTitle');
     let map;
     let markerGroup;
@@ -1483,6 +1490,7 @@
     let loadedShapeGeoJson = null;
     let loadedTenementGeoJson = null;
     let shapefileLayer = null;
+    let drillpadFeatureLayers = [];
     let tenementLayer = null;
     let completedPulseIntervals = [];
     let currentStatusFilter = 'all';
@@ -1720,6 +1728,12 @@
       );
     }
 
+    const drillpadStatusVisibility = {
+      'retain - epo ph1': true,
+      'remove - epo ph1': true,
+      'planned - proposed work plan': true,
+    };
+
     const drillpadActionColors = {
       'retain - epo ph1': '#5CB85C',
       'remove - epo ph1': '#4D4D4D',
@@ -1837,11 +1851,13 @@
         map.removeLayer(shapefileLayer);
       }
       selectedDrillpadLayer = null;
+      drillpadFeatureLayers = [];
 
       shapefileLayer = L.geoJSON(featureCollection, {
         style: (feature) => getDrillpadLayerStyle(feature, false),
         pointToLayer: (feature, latlng) => L.rectangle(drillpadPointBounds(latlng), getDrillpadLayerStyle(feature, false)),
         onEachFeature: (feature, layer) => {
+          drillpadFeatureLayers.push(layer);
           layer.on('click', () => {
             currentSelectedDrillpadFeature = feature || null;
             currentSelectedPoint = null;
@@ -1853,10 +1869,33 @@
         },
       }).addTo(map);
 
+      applyDrillpadStatusFilter();
+
       if (fitToLayer) {
         const bounds = shapefileLayer.getBounds();
         zoomToBounds(bounds);
       }
+    }
+
+    function applyDrillpadStatusFilter() {
+      if (!shapefileLayer) return;
+
+      drillpadFeatureLayers.forEach((layer) => {
+        const rawAction = layer.feature?.properties?.Status ?? layer.feature?.properties?.status ?? layer.feature?.properties?.STATUS ?? '';
+        const normalized = normalizeDrillpadAction(rawAction);
+        const isVisible = drillpadStatusVisibility[normalized] !== false;
+
+        if (isVisible) {
+          if (!shapefileLayer.hasLayer(layer)) {
+            shapefileLayer.addLayer(layer);
+          }
+        } else if (shapefileLayer.hasLayer(layer)) {
+          if (layer === selectedDrillpadLayer) {
+            clearSelectedDrillpadLayer();
+          }
+          shapefileLayer.removeLayer(layer);
+        }
+      });
     }
 
     function renderTenementLayer(featureCollection, fitToLayer = true) {
@@ -2961,6 +3000,16 @@
       });
       applyStatusFilter();
     });
+
+    if (drillpadStatusFilterControls) {
+      drillpadStatusFilterControls.addEventListener('change', (event) => {
+        const toggle = event.target.closest('.drillpad-status-toggle');
+        if (!toggle) return;
+
+        drillpadStatusVisibility[toggle.dataset.status] = toggle.checked;
+        applyDrillpadStatusFilter();
+      });
+    }
 
     topLevelTabs.addEventListener('click', (event) => {
       const trigger = event.target.closest('.details-tab');
@@ -4188,9 +4237,15 @@
             return;
           }
 
-          loadedShapeGeoJson = normalizedFeatureCollection;
+          loadedShapeGeoJson = {
+            ...normalizedFeatureCollection,
+            features: normalizedFeatureCollection.features.filter((feature) => {
+              const rawAction = feature?.properties?.Status ?? feature?.properties?.status ?? feature?.properties?.STATUS ?? '';
+              return normalizeDrillpadAction(rawAction) !== 'rejected - proposed work plan';
+            }),
+          };
           renderShapeLayer(loadedShapeGeoJson, true);
-          messages.textContent = `Loaded spatial layer: ${normalizedFeatureCollection.features.length} feature${normalizedFeatureCollection.features.length === 1 ? '' : 's'}.`;
+          messages.textContent = `Loaded spatial layer: ${loadedShapeGeoJson.features.length} feature${loadedShapeGeoJson.features.length === 1 ? '' : 's'}.`;
           updateStatusSummary();
           if (currentSelectedPoint) {
             updateDetails(currentSelectedPoint);
@@ -4271,7 +4326,7 @@
     messages.textContent = 'Load Hog_Ranch.xlsm and optionally Pads/Tenement shapefiles (.zip/.geojson) to overlay spatial context.';
     syncGeologyFromWorkbook();
   </script>
-<script src="unlock.js"></script>
-<script src="autoload.js"></script>
+  <script src="unlock.js"></script>
+  <script src="autoload.js"></script>
 </body>
 </html>
