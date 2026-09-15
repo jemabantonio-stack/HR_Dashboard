@@ -787,6 +787,11 @@
       margin-top: 12px;
     }
 
+    .total-submitted-note {
+      margin-top: 12px;
+      padding: 12px 16px;
+    }
+
     .sample-submission-body {
       display: none;
       margin: 0 12px 12px;
@@ -1362,6 +1367,9 @@
             </select>
           </div>
         </div>
+        <div class="assay-coverage-note total-submitted-note" id="totalSubmittedNote" style="display:none;">
+          <span class="assay-coverage-text" id="totalSubmittedText"></span>
+        </div>
         <div id="drillpadActionLegend" class="drillpad-action-legend details-panel" aria-label="Drillpad action color legend">
           <p class="drillpad-action-legend-title">Drillpad Status Colors</p>
           <div class="drillpad-action-legend-items" id="drillpadStatusFilterControls">
@@ -1450,6 +1458,8 @@
     const sampleSubmissionToggle = document.getElementById('sampleSubmissionToggle');
     const sampleSubmissionText = document.getElementById('sampleSubmissionText');
     const sampleSubmissionSelect = document.getElementById('sampleSubmissionSelect');
+    const totalSubmittedNote = document.getElementById('totalSubmittedNote');
+    const totalSubmittedText = document.getElementById('totalSubmittedText');
     const detailsTabs = document.getElementById('detailsTabs');
     const drillpadActionLegend = document.getElementById('drillpadActionLegend');
     const messages = document.getElementById('messages');
@@ -2353,7 +2363,7 @@
         .filter((point) => countAssayEntriesWithGrade(siDataMap[point.drillholeId]) > 0)
         .sort((a, b) => String(a.drillholeLabel).localeCompare(String(b.drillholeLabel), undefined, { numeric: true }));
 
-      assayCoverageText.innerHTML = `<strong>${holesWithAssay.length} of ${total}</strong> drillholes have available assay data.`;
+      assayCoverageText.innerHTML = `<strong>${holesWithAssay.length} of ${total}</strong> drillholes have available assay data`;
 
       if (holesWithAssay.length) {
         assayCoverageList.innerHTML = holesWithAssay.map((point) => {
@@ -2389,7 +2399,7 @@
         .filter((point) => (siDataMap[point.drillholeId] || []).some(siRowHasSampleSubmitted))
         .sort((a, b) => String(a.drillholeLabel).localeCompare(String(b.drillholeLabel), undefined, { numeric: true }));
 
-      sampleSubmissionText.innerHTML = `<strong>${holesSubmitted.length} of ${total}</strong> drillholes have samples submitted to the lab.`;
+      sampleSubmissionText.innerHTML = `<strong>${holesSubmitted.length} of ${total}</strong> drillholes have samples under analysis in the laboratory.`;
 
       const previousValue = sampleSubmissionSelect.value;
       sampleSubmissionSelect.innerHTML = '<option value="">Choose hole</option>' +
@@ -2397,6 +2407,17 @@
       sampleSubmissionSelect.value = holesSubmitted.some((point) => point.id === previousValue) ? previousValue : '';
 
       sampleSubmissionNote.style.display = 'block';
+    }
+
+    function updateTotalSubmittedNote() {
+      if (!totalSubmittedNote) return;
+      if (currentDetailsTab !== 'drillhole' || currentTopLevelTab !== 'assay') {
+        totalSubmittedNote.style.display = 'none';
+        return;
+      }
+      const totalSubmitted = Object.keys(siDataMap).length;
+      totalSubmittedText.innerHTML = `<strong>${totalSubmitted}</strong> drillholes have samples submitted from field to the laboratory`;
+      totalSubmittedNote.style.display = 'block';
     }
 
     function renderTopLevelEmptyState() {
@@ -2443,6 +2464,7 @@
       });
       updateAssayCoverageNote();
       updateSampleSubmissionNote();
+      updateTotalSubmittedNote();
       updateStatusSummary();
       if (currentDetailsTab === 'drillpad' && currentSelectedDrillpadFeature) {
         syncSelectedDrillpadLayer(currentSelectedDrillpadFeature);
@@ -2473,6 +2495,7 @@
       });
       updateAssayCoverageNote();
       updateSampleSubmissionNote();
+      updateTotalSubmittedNote();
       if (currentTopLevelTab === 'geology') {
         syncGeologyFromWorkbook();
       }
@@ -4133,6 +4156,7 @@
       syncGeologyFromWorkbook();
       updateAssayCoverageNote();
       updateSampleSubmissionNote();
+      updateTotalSubmittedNote();
     }
 
     function processActualDepths(rows) {
@@ -4326,7 +4350,7 @@
     messages.textContent = 'Load Hog_Ranch.xlsm and optionally Pads/Tenement shapefiles (.zip/.geojson) to overlay spatial context.';
     syncGeologyFromWorkbook();
   </script>
-<script src="unlock.js"></script>
-<script src="autoload.js"></script>
+  <script src="unlock.js"></script>
+  <script src="autoload.js"></script>
 </body>
 </html>
