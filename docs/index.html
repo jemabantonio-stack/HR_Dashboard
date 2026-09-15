@@ -1349,12 +1349,8 @@
           <button class="details-tab" type="button" data-top-tab="geology">Geology</button>
           <button class="details-tab" type="button" data-top-tab="assay">Assay</button>
         </div>
-        <div class="assay-coverage-note" id="assayCoverageNote" style="display:none;">
-          <button type="button" class="assay-coverage-toggle" id="assayCoverageToggle">
-            <span class="assay-coverage-text" id="assayCoverageText"></span>
-            <span class="assay-coverage-arrow" aria-hidden="true">▸</span>
-          </button>
-          <div class="assay-coverage-list" id="assayCoverageList"></div>
+        <div class="assay-coverage-note total-submitted-note" id="totalSubmittedNote" style="display:none;">
+          <span class="assay-coverage-text" id="totalSubmittedText"></span>
         </div>
         <div class="assay-coverage-note sample-submission-note" id="sampleSubmissionNote" style="display:none;">
           <button type="button" class="assay-coverage-toggle" id="sampleSubmissionToggle">
@@ -1367,8 +1363,12 @@
             </select>
           </div>
         </div>
-        <div class="assay-coverage-note total-submitted-note" id="totalSubmittedNote" style="display:none;">
-          <span class="assay-coverage-text" id="totalSubmittedText"></span>
+        <div class="assay-coverage-note" id="assayCoverageNote" style="display:none;">
+          <button type="button" class="assay-coverage-toggle" id="assayCoverageToggle">
+            <span class="assay-coverage-text" id="assayCoverageText"></span>
+            <span class="assay-coverage-arrow" aria-hidden="true">▸</span>
+          </button>
+          <div class="assay-coverage-list" id="assayCoverageList"></div>
         </div>
         <div id="drillpadActionLegend" class="drillpad-action-legend details-panel" aria-label="Drillpad action color legend">
           <p class="drillpad-action-legend-title">Drillpad Status Colors</p>
@@ -2627,7 +2627,7 @@
         <div class="detail-card depth-summary-card">
           ${buildDepthSummarySection('RC (in ft)', getCompletedActualDepthValues('RC', selectedDailyTotalsDate))}
           <div class="metric-divider" aria-hidden="true"></div>
-          ${buildDepthSummarySection('Core (in ft)', getCompletedActualDepthValues('DD', selectedDailyTotalsDate))}
+          ${buildDepthSummarySection('DD (in ft)', getCompletedActualDepthValues('DD', selectedDailyTotalsDate))}
         </div>
       `;
 
@@ -4350,7 +4350,7 @@
     messages.textContent = 'Load Hog_Ranch.xlsm and optionally Pads/Tenement shapefiles (.zip/.geojson) to overlay spatial context.';
     syncGeologyFromWorkbook();
   </script>
-<script src="unlock.js"></script>
-<script src="autoload.js"></script>
+  <script src="unlock.js"></script>
+  <script src="autoload.js"></script>
 </body>
 </html>
