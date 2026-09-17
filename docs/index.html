@@ -1775,6 +1775,11 @@
       'planned - proposed work plan': '#E67E22',
     };
 
+    const drillpadStatusAliases = {
+      'remove planned - proposed work plan': 'planned - proposed work plan',
+      'removed planned - proposed work plan': 'planned - proposed work plan',
+    };
+
     function normalizeDrillpadAction(rawAction) {
       return String(rawAction ?? '')
         .trim()
@@ -1915,7 +1920,8 @@
       drillpadFeatureLayers.forEach((layer) => {
         const rawAction = layer.feature?.properties?.Status ?? layer.feature?.properties?.status ?? layer.feature?.properties?.STATUS ?? '';
         const normalized = normalizeDrillpadAction(rawAction);
-        const isVisible = drillpadStatusVisibility[normalized] !== false;
+        const visibilityKey = drillpadStatusAliases[normalized] || normalized;
+        const isVisible = drillpadStatusVisibility[visibilityKey] !== false;
 
         if (isVisible) {
           if (!shapefileLayer.hasLayer(layer)) {
@@ -4388,7 +4394,7 @@
     messages.textContent = 'Load Hog_Ranch.xlsm and optionally Pads/Tenement shapefiles (.zip/.geojson) to overlay spatial context.';
     syncGeologyFromWorkbook();
   </script>
-<script src="unlock.js"></script>
-<script src="autoload.js"></script>
+  <script src="unlock.js"></script>
+  <script src="autoload.js"></script>
 </body>
 </html>
