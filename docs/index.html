@@ -832,6 +832,28 @@
       color: #A0A678;
     }
 
+    .si-notes-box {
+      margin: 10px 0;
+      padding: 8px 12px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+    }
+
+    .si-notes-box strong {
+      display: block;
+      margin-bottom: 4px;
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    .si-notes-box p {
+      margin: 4px 0;
+    }
+
+    .si-notes-box p + p {
+      margin-top: 8px;
+    }
+
     #messages {
       color: rgba(255, 255, 255, 0.68);
       font-size: 0.98rem;
@@ -3794,6 +3816,22 @@
             siNote.textContent = `Significant assay intercepts for hole ${drillholeName} reported at a cut-off grade of ≥ 0.15 g/t Au with a maximum internal dilution of 5 ft`;
             assayCard.appendChild(siNote);
 
+            const siNotesKey = findKey(siRows[0] || {}, ['notes']);
+            const siNoteTexts = siNotesKey
+              ? Array.from(new Set(
+                  siRows
+                    .map((siRow) => String(siRow[siNotesKey] ?? '').trim())
+                    .filter((text) => text.length > 0)
+                ))
+              : [];
+            if (siNoteTexts.length) {
+              const notesBox = document.createElement('div');
+              notesBox.className = 'panel-note si-notes-box';
+              notesBox.innerHTML = '<strong>Notes</strong>' +
+                siNoteTexts.map((text) => `<p>${formatValue(text)}</p>`).join('');
+              assayCard.appendChild(notesBox);
+            }
+
             const siKeys = Array.from(new Set(
               siRows.flatMap((siRow) =>
                 Object.keys(siRow || {})
@@ -4350,7 +4388,7 @@
     messages.textContent = 'Load Hog_Ranch.xlsm and optionally Pads/Tenement shapefiles (.zip/.geojson) to overlay spatial context.';
     syncGeologyFromWorkbook();
   </script>
-<script src="unlock.js"></script>
-<script src="autoload.js"></script>
+  <script src="unlock.js"></script>
+  <script src="autoload.js"></script>
 </body>
 </html>
