@@ -631,6 +631,14 @@
       white-space: nowrap;
     }
 
+    .detail-row.other-details-row {
+      grid-template-columns: auto 1fr;
+    }
+
+    .detail-row span.other-details-value {
+      overflow-wrap: anywhere;
+    }
+
     .accordion-card-body .detail-row strong,
     .actual-label,
     .plan-actual strong {
@@ -3711,6 +3719,11 @@
         actualValue = actualDepthData[normalizedDrillholeId];
       }
       const actualTotalDepthValue = point.actualTotalDepth || actualTotalDepthData[normalizedDrillholeId] || 'N/A';
+      // Text comments in Final Depth (Actual) (e.g. "RIG BROKE @ 380' - NS") go to Other Details and blank the status.
+      const finalDepthActualKey = findKey(row, ['final depth (actual)', 'final_depth_actual', 'final depth actual']);
+      const finalDepthActualText = finalDepthActualKey ? String(row[finalDepthActualKey] ?? '').trim() : '';
+      const otherDetailsValue = finalDepthActualText && !/^-?[\d,]+(\.\d+)?$/.test(finalDepthActualText) ? finalDepthActualText : '';
+      const statusMarkup = otherDetailsValue ? '-' : `<span class="status-chip ${statusClass}">${statusValue}</span>`;
 
       const createAccordionCard = (title, subtitle, collapsed = true, type = 'accordion') => {
         const card = document.createElement('div');
@@ -4009,7 +4022,10 @@
               <strong>Drillhole</strong><span>${drillholeName}</span>
             </div>
             <div class="detail-row">
-              <strong>Status</strong><span><span class="status-chip ${statusClass}">${statusValue}</span></span>
+              <strong>Status</strong><span>${statusMarkup}</span>
+            </div>
+            <div class="detail-row other-details-row">
+              <strong>Other Details</strong><span class="other-details-value">${formatValue(otherDetailsValue)}</span>
             </div>
             <div class="detail-row">
               <strong>Tools</strong><span>${toolsValue}</span>
@@ -4025,8 +4041,7 @@
           <div class="metric-divider" aria-hidden="true"></div>
           <div><strong>Planned Depth</strong><span>${plannedValue}</span></div>
           <div><strong>Actual Survey Depth</strong><span>${actualValue}</span></div>
-          <div><strong>Actual Total Depth (from field)</strong><span>${actualTotalDepthValue}</span></div>
-        `;
+          <div><strong>Actual Total Depth (from field)</strong><span>${actualTotalDepthValue}</span></div>        `;
         selectedDetails.appendChild(panel);
 
         const surveySectionDivider = document.createElement('div');
@@ -4394,7 +4409,7 @@
     messages.textContent = 'Load Hog_Ranch.xlsm and optionally Pads/Tenement shapefiles (.zip/.geojson) to overlay spatial context.';
     syncGeologyFromWorkbook();
   </script>
-<script src="unlock.js"></script>
-<script src="autoload.js"></script>
+  <script src="unlock.js"></script>
+  <script src="autoload.js"></script>
 </body>
 </html>
