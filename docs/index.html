@@ -2076,13 +2076,16 @@
       });
     }
 
+    // Collars on the same pad can differ by fractions of a millimetre from rounding (e.g. 293600.56 vs 293600.5603),
+    // so compare in projected metres with a small tolerance rather than requiring identical lat/lng.
+    const OVERLAP_TOLERANCE_METRES = 0.05;
+
     function getOverlappingPoints(point) {
       if (!point || !point.mapLatLng || !drillholePoints.length) return [];
-      const [lat, lng] = point.mapLatLng;
       return drillholePoints.filter((candidate) => {
         if (candidate.id === point.id || !candidate.mapLatLng) return false;
-        const [candidateLat, candidateLng] = candidate.mapLatLng;
-        return Math.abs(candidateLat - lat) < 1e-9 && Math.abs(candidateLng - lng) < 1e-9;
+        return Math.abs(candidate.easting - point.easting) <= OVERLAP_TOLERANCE_METRES
+          && Math.abs(candidate.northing - point.northing) <= OVERLAP_TOLERANCE_METRES;
       });
     }
 
@@ -3484,6 +3487,13 @@
       return 'planned';
     }
 
+    // Text comments in Final Depth (Actual) (e.g. "RIG BROKE @ 380' - NS") are shown as Other Details and blank the status.
+    function getFinalDepthComment(row) {
+      const finalDepthActualKey = findKey(row, ['final depth (actual)', 'final_depth_actual', 'final depth actual']);
+      const text = finalDepthActualKey ? String(row[finalDepthActualKey] ?? '').trim() : '';
+      return text && !/^-?[\d,]+(\.\d+)?$/.test(text) ? text : '';
+    }
+
     function computeHoleCategory(holeTypeValue) {
       return String(holeTypeValue ?? '').trim().toUpperCase() === 'RC' ? 'RC' : 'DD';
     }
@@ -3569,7 +3579,7 @@
         const drillholeLabel = drillKey ? formatValue(row[drillKey]) : `Drillhole ${index + 1}`;
         const holeTypeValue = holeTypeKey ? formatValue(row[holeTypeKey]) : '';
         const status = computeDrillholeStatus(row);
-        const statusValue = getStatusLabel(status);
+        const statusValue = getFinalDepthComment(row) ? '-' : getStatusLabel(status);
         const point = {
           id: `drillhole-${index}`,
           row,
@@ -3719,10 +3729,7 @@
         actualValue = actualDepthData[normalizedDrillholeId];
       }
       const actualTotalDepthValue = point.actualTotalDepth || actualTotalDepthData[normalizedDrillholeId] || 'N/A';
-      // Text comments in Final Depth (Actual) (e.g. "RIG BROKE @ 380' - NS") go to Other Details and blank the status.
-      const finalDepthActualKey = findKey(row, ['final depth (actual)', 'final_depth_actual', 'final depth actual']);
-      const finalDepthActualText = finalDepthActualKey ? String(row[finalDepthActualKey] ?? '').trim() : '';
-      const otherDetailsValue = finalDepthActualText && !/^-?[\d,]+(\.\d+)?$/.test(finalDepthActualText) ? finalDepthActualText : '';
+      const otherDetailsValue = getFinalDepthComment(row);
       const statusMarkup = otherDetailsValue ? '-' : `<span class="status-chip ${statusClass}">${statusValue}</span>`;
 
       const createAccordionCard = (title, subtitle, collapsed = true, type = 'accordion') => {
@@ -4409,7 +4416,7 @@
     messages.textContent = 'Load Hog_Ranch.xlsm and optionally Pads/Tenement shapefiles (.zip/.geojson) to overlay spatial context.';
     syncGeologyFromWorkbook();
   </script>
-<script src="unlock.js"></script>
-<script src="autoload.js"></script>
+  <script src="unlock.js"></script>
+  <script src="autoload.js"></script>
 </body>
 </html>
