@@ -1996,12 +1996,14 @@
     function getStatusColor(status) {
       if (status === 'completed') return '#43331C';
       if (status === 'planned') return '#A0A678';
+      if (status === 'none') return '#8A9499';
       return '#8B8A44';
     }
 
     function getStatusLabel(status) {
       if (status === 'completed') return 'Completed';
       if (status === 'planned') return 'Planned';
+      if (status === 'none') return '-';
       return 'Active';
     }
 
@@ -3578,8 +3580,9 @@
 
         const drillholeLabel = drillKey ? formatValue(row[drillKey]) : `Drillhole ${index + 1}`;
         const holeTypeValue = holeTypeKey ? formatValue(row[holeTypeKey]) : '';
-        const status = computeDrillholeStatus(row);
-        const statusValue = getFinalDepthComment(row) ? '-' : getStatusLabel(status);
+        // 'none' holes only show under the All filter.
+        const status = getFinalDepthComment(row) ? 'none' : computeDrillholeStatus(row);
+        const statusValue = getStatusLabel(status);
         const point = {
           id: `drillhole-${index}`,
           row,
@@ -4416,7 +4419,7 @@
     messages.textContent = 'Load Hog_Ranch.xlsm and optionally Pads/Tenement shapefiles (.zip/.geojson) to overlay spatial context.';
     syncGeologyFromWorkbook();
   </script>
-<script src="unlock.js"></script>
-<script src="autoload.js"></script>
+  <script src="unlock.js"></script>
+  <script src="autoload.js"></script>
 </body>
 </html>
