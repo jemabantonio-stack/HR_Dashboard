@@ -585,6 +585,14 @@
       box-shadow: 0 0 0 1px rgba(255,255,255,0.35);
     }
 
+    .strip-log-interval.is-void {
+      box-shadow: inset 0 0 0 1px #9E9E9E;
+    }
+
+    .strip-log-swatch.is-void {
+      box-shadow: 0 0 0 1px #9E9E9E;
+    }
+
     .actual-grid {
       display: grid;
       gap: 8px;
@@ -2807,19 +2815,22 @@
 
     // Standard lithology colours, keyed by normalized name ("NS/ Void" -> "nsvoid").
     const LITHOLOGY_COLORS = {
-      claystonesiltstone: '#808080',
-      nsvoid: '#050505',
-      nr: '#ffffff',
-      metaseds: '#4bce4d',
-      fault: '#ff1900',
-      granitoid: '#ff42a7',
-      andesite: '#d93f3f',
-      basalt: '#e6d684',
-      rhytuff: '#f07828',
-      rhyolite: '#e1ac89',
-      dump: '#6d6969',
-      overburden: '#808080',
+      overburden: '#E8D28A',
+      dump: '#8C6A4F',
+      claystonesiltstone: '#A9B4A0',
+      metaseds: '#6B7A8F',
+      granitoid: '#F4A6B7',
+      rhyolite: '#F28E2B',
+      rhytuff: '#FBC98E',
+      andesite: '#7FB77E',
+      basalt: '#2E6B3F',
+      fault: '#E31A1C',
+      nr: '#BDBDBD',
+      nsvoid: '#FFFFFF',
     };
+
+    // White NS / Void intervals get a thin grey outline so they stay visible.
+    const isVoidLithology = (lithology) => normalizeKeyName(lithology) === 'nsvoid';
 
     // Used only for lithologies not in LITHOLOGY_COLORS.
     const LITHOLOGY_PALETTE = ['#C9A66B', '#8FA876', '#6E9BB5', '#B5736E', '#A58BB8', '#D4C38A', '#7FB3A6', '#C48F5A', '#9AA0A6', '#6F8F5E', '#D99A8C', '#8C7A5B'];
@@ -2895,7 +2906,7 @@
         const rangeText = `${formatNumeric(interval.from, 1)}–${formatNumeric(interval.to, 1)}${unitSuffix}`;
 
         const block = document.createElement('div');
-        block.className = 'strip-log-interval';
+        block.className = `strip-log-interval${isVoidLithology(interval.lithology) ? ' is-void' : ''}`;
         block.style.top = `${top}px`;
         block.style.height = `${height}px`;
         block.style.background = color;
@@ -2925,7 +2936,7 @@
       Array.from(new Set(intervals.map((interval) => interval.lithology))).forEach((lithology) => {
         const item = document.createElement('span');
         const swatch = document.createElement('i');
-        swatch.className = 'strip-log-swatch';
+        swatch.className = `strip-log-swatch${isVoidLithology(lithology) ? ' is-void' : ''}`;
         swatch.style.background = lithologyColorMap[lithology] || LITHOLOGY_PALETTE[0];
         item.appendChild(swatch);
         item.appendChild(document.createTextNode(lithology));
@@ -4563,7 +4574,7 @@
     messages.textContent = 'Load Hog_Ranch.xlsm and optionally Pads/Tenement shapefiles (.zip/.geojson) to overlay spatial context.';
     syncGeologyFromWorkbook();
   </script>
-<script src="unlock.js"></script>
-<script src="autoload.js"></script>
+  <script src="unlock.js"></script>
+  <script src="autoload.js"></script>
 </body>
 </html>
