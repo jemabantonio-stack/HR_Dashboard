@@ -2369,7 +2369,7 @@
         ? 'No holes of this type found.'
         : 'Load a workbook to view completion totals.';
 
-      renderStatusGroup(statusPieChartRC, statusSummaryContentRC, statusTargetRC, rcPoints, emptyMessage, 150);
+      renderStatusGroup(statusPieChartRC, statusSummaryContentRC, statusTargetRC, rcPoints, emptyMessage, 140);
       renderStatusGroup(statusPieChartDD, statusSummaryContentDD, statusTargetDD, ddPoints, emptyMessage, 8);
     }
 
@@ -3648,6 +3648,10 @@
       return text && !/^-?[\d,]+(\.\d+)?$/.test(text) ? text : '';
     }
 
+    function isPadPlannedRow(row) {
+      return Object.keys(row || {}).some((key) => /final\s*depth/i.test(key) && /pad\s*is\s*planned/i.test(String(row[key] ?? '')));
+    }
+
     function computeHoleCategory(holeTypeValue) {
       return String(holeTypeValue ?? '').trim().toUpperCase() === 'RC' ? 'RC' : 'DD';
     }
@@ -4299,6 +4303,9 @@
         return;
       }
 
+      // Holes whose pad is not built yet ("PAD IS PLANNED" in a Final Depth column) are left off the dashboard entirely.
+      selectedSheet.rows = selectedSheet.rows.filter((row) => !isPadPlannedRow(row));
+
       const surveySheet = findSheetByNames(candidateSheets, ['survey_imdex', 'survey', 'actual', 'actuals', 'actual survey', 'asbuilt', 'as-built'])
         || candidateSheets.find(({ sheetName, rows }) => {
           if (!rows.length) return false;
@@ -4556,7 +4563,7 @@
     messages.textContent = 'Load Hog_Ranch.xlsm and optionally Pads/Tenement shapefiles (.zip/.geojson) to overlay spatial context.';
     syncGeologyFromWorkbook();
   </script>
-<script src="unlock.js"></script>
-<script src="autoload.js"></script>
+  <script src="unlock.js"></script>
+  <script src="autoload.js"></script>
 </body>
 </html>
