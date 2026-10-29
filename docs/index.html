@@ -508,32 +508,81 @@
       font-variant-numeric: tabular-nums;
     }
 
-    .geology-link {
+    .strip-log {
+      display: grid;
+      grid-template-columns: 44px 34px 1fr;
+      gap: 8px;
+      padding: 6px 4px 4px;
+    }
+
+    .strip-log-axis,
+    .strip-log-column,
+    .strip-log-labels {
+      position: relative;
+    }
+
+    .strip-log-tick {
+      position: absolute;
+      right: 0;
+      transform: translateY(-50%);
+      font-size: 0.72rem;
+      color: rgba(255, 255, 255, 0.6);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .strip-log-column {
+      border-radius: 6px;
+      overflow: hidden;
+      background: repeating-linear-gradient(45deg, rgba(255,255,255,0.05) 0 4px, transparent 4px 8px);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18);
+    }
+
+    .strip-log-interval {
+      position: absolute;
+      left: 0;
+      right: 0;
+      border-bottom: 1px solid rgba(11, 30, 40, 0.55);
+    }
+
+    .strip-log-label {
+      position: absolute;
+      left: 0;
+      right: 0;
+      transform: translateY(-50%);
+      font-size: 0.74rem;
+      line-height: 1.2;
+      color: rgba(255, 255, 255, 0.85);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .strip-log-label small {
+      color: rgba(255, 255, 255, 0.55);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .strip-log-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 14px;
+      padding: 4px;
+      font-size: 0.76rem;
+      color: rgba(255, 255, 255, 0.78);
+    }
+
+    .strip-log-legend span {
       display: inline-flex;
       align-items: center;
-      justify-content: center;
       gap: 6px;
-      padding: 6px 12px;
-      border-radius: 999px;
-      border: 1px solid rgba(160, 166, 120, 0.4);
-      background: rgba(160, 166, 120, 0.2);
-      color: #f5f8ff;
-      text-decoration: none;
-      font-weight: 700;
-      font-size: 0.82rem;
-      transition: background 0.2s ease, border-color 0.2s ease;
     }
 
-    .geology-link:hover {
-      background: rgba(160, 166, 120, 0.3);
-      border-color: rgba(160, 166, 120, 0.6);
-    }
-
-    .geology-web-note {
-      margin: 0;
-      font-size: 0.8rem;
-      color: rgba(255, 255, 255, 0.6);
-      text-align: right;
+    .strip-log-swatch {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      flex: none;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.35);
     }
 
     .actual-grid {
@@ -2210,6 +2259,9 @@
       const activeEndAngle = Math.min((completed + active) / denominator, 1) * 360;
       const completedPct = Math.round((completed / denominator) * 100);
       const activePct = Math.round((active / denominator) * 100);
+      // The third pie slice is the shortfall to the target, so it needs its own legend row.
+      const remaining = target ? Math.max(target - completed - active, 0) : 0;
+      const remainingPct = Math.max(100 - completedPct - activePct, 0);
       const completedColor = getStatusColor('completed');
       const activeColor = getStatusColor('active');
       const remainingColor = getStatusColor('planned');
@@ -2226,6 +2278,12 @@
           <strong class="status-summary-count">${active}</strong>
           <span class="status-summary-pct">(${activePct}%)</span>
         </div>
+        ${remaining ? `
+        <div class="status-summary-item">
+          <span class="status-summary-label"><span class="status-dot status-dot-planned"></span>Remaining to Target</span>
+          <strong class="status-summary-count">${remaining}</strong>
+          <span class="status-summary-pct">(${remainingPct}%)</span>
+        </div>` : ''}
       `;
     }
 
@@ -2733,6 +2791,148 @@
         }
         geologyDataMap[normalizedId].push(row);
       });
+
+      // Assign lithology colours once across all holes so the same rock type matches between holes.
+      lithologyColorMap = {};
+      const lithologies = new Set();
+      Object.values(geologyDataMap).forEach((rows) => {
+        getLithologyIntervals(rows).intervals.forEach((interval) => lithologies.add(interval.lithology));
+      });
+      let fallbackIndex = 0;
+      Array.from(lithologies).sort().forEach((lithology) => {
+        lithologyColorMap[lithology] = LITHOLOGY_COLORS[normalizeKeyName(lithology)]
+          || LITHOLOGY_PALETTE[fallbackIndex++ % LITHOLOGY_PALETTE.length];
+      });
+    }
+
+    // Standard lithology colours, keyed by normalized name ("NS/ Void" -> "nsvoid").
+    const LITHOLOGY_COLORS = {
+      claystonesiltstone: '#808080',
+      nsvoid: '#050505',
+      nr: '#ffffff',
+      metaseds: '#4bce4d',
+      fault: '#ff1900',
+      granitoid: '#ff42a7',
+      andesite: '#d93f3f',
+      basalt: '#e6d684',
+      rhytuff: '#f07828',
+      rhyolite: '#e1ac89',
+      dump: '#6d6969',
+      overburden: '#808080',
+    };
+
+    // Used only for lithologies not in LITHOLOGY_COLORS.
+    const LITHOLOGY_PALETTE = ['#C9A66B', '#8FA876', '#6E9BB5', '#B5736E', '#A58BB8', '#D4C38A', '#7FB3A6', '#C48F5A', '#9AA0A6', '#6F8F5E', '#D99A8C', '#8C7A5B'];
+    let lithologyColorMap = {};
+
+    // Matches headers like "From", "Depth From", "From (ft)", "Depth_From_m" without catching unrelated columns such as "Total".
+    function findDepthKey(row, word) {
+      const pattern = new RegExp(`^(depth)?${word}(depth)?(ft|feet|m|metres|meters)?$`);
+      return Object.keys(row || {}).find((key) => pattern.test(normalizeKeyName(key))) || null;
+    }
+
+    function getLithologyIntervals(rows) {
+      const sample = (rows || [])[0] || {};
+      const fromKey = findDepthKey(sample, 'from');
+      const toKey = findDepthKey(sample, 'to');
+      const lithologyKey = findKey(sample, ['lithology', 'lith', 'rock type']);
+      if (!fromKey || !toKey || !lithologyKey) return { intervals: [], unit: '' };
+
+      const unitSuffix = normalizeKeyName(fromKey).replace(/^(depth)?from(depth)?/, '');
+      const unit = unitSuffix ? (unitSuffix.startsWith('f') ? 'ft' : 'm') : '';
+      const intervals = rows
+        .map((row) => ({
+          from: parseNumber(row[fromKey]),
+          to: parseNumber(row[toKey]),
+          lithology: String(row[lithologyKey] ?? '').trim(),
+        }))
+        .filter((interval) => !Number.isNaN(interval.from) && !Number.isNaN(interval.to) && interval.to > interval.from && interval.lithology)
+        .sort((a, b) => a.from - b.from);
+      return { intervals, unit };
+    }
+
+    function getNiceDepthStep(totalDepth) {
+      const rough = totalDepth / 8;
+      const magnitude = Math.pow(10, Math.floor(Math.log10(rough)));
+      const step = [1, 2, 2.5, 5, 10].map((factor) => factor * magnitude).find((value) => value >= rough);
+      return step || magnitude * 10;
+    }
+
+    function renderLithologyStripLog(intervals, unit) {
+      const wrapper = document.createElement('div');
+      const totalDepth = intervals[intervals.length - 1].to;
+      const columnHeight = Math.min(Math.max(intervals.length * 26, 320), 640);
+      const toY = (depth) => (depth / totalDepth) * columnHeight;
+      const unitSuffix = unit ? ` ${unit}` : '';
+
+      const strip = document.createElement('div');
+      strip.className = 'strip-log';
+      const axis = document.createElement('div');
+      axis.className = 'strip-log-axis';
+      const column = document.createElement('div');
+      column.className = 'strip-log-column';
+      const labels = document.createElement('div');
+      labels.className = 'strip-log-labels';
+      [axis, column, labels].forEach((el) => {
+        el.style.height = `${columnHeight}px`;
+        strip.appendChild(el);
+      });
+
+      const step = getNiceDepthStep(totalDepth);
+      for (let depth = 0; depth <= totalDepth + 1e-9; depth += step) {
+        const tick = document.createElement('span');
+        tick.className = 'strip-log-tick';
+        tick.style.top = `${toY(depth)}px`;
+        tick.textContent = `${Number(depth.toFixed(2))}${unitSuffix}`;
+        axis.appendChild(tick);
+      }
+
+      let lastLabelY = -Infinity;
+      intervals.forEach((interval) => {
+        const top = toY(interval.from);
+        const height = Math.max(toY(interval.to) - top, 1);
+        const color = lithologyColorMap[interval.lithology] || LITHOLOGY_PALETTE[0];
+        const rangeText = `${formatNumeric(interval.from, 1)}–${formatNumeric(interval.to, 1)}${unitSuffix}`;
+
+        const block = document.createElement('div');
+        block.className = 'strip-log-interval';
+        block.style.top = `${top}px`;
+        block.style.height = `${height}px`;
+        block.style.background = color;
+        block.title = `${interval.lithology}: ${rangeText}`;
+        column.appendChild(block);
+
+        // Skip labels that would overlap the previous one; the colour and hover title still identify the interval.
+        const labelY = top + height / 2;
+        if (labelY - lastLabelY >= 16) {
+          const label = document.createElement('div');
+          label.className = 'strip-log-label';
+          label.style.top = `${labelY}px`;
+          label.title = block.title;
+          label.textContent = `${interval.lithology} `;
+          const range = document.createElement('small');
+          range.textContent = rangeText;
+          label.appendChild(range);
+          labels.appendChild(label);
+          lastLabelY = labelY;
+        }
+      });
+
+      wrapper.appendChild(strip);
+
+      const legend = document.createElement('div');
+      legend.className = 'strip-log-legend';
+      Array.from(new Set(intervals.map((interval) => interval.lithology))).forEach((lithology) => {
+        const item = document.createElement('span');
+        const swatch = document.createElement('i');
+        swatch.className = 'strip-log-swatch';
+        swatch.style.background = lithologyColorMap[lithology] || LITHOLOGY_PALETTE[0];
+        item.appendChild(swatch);
+        item.appendChild(document.createTextNode(lithology));
+        legend.appendChild(item);
+      });
+      wrapper.appendChild(legend);
+      return wrapper;
     }
 
     function buildAssayData(assayRows) {
@@ -2895,54 +3095,6 @@
         }
       });
       return values;
-    }
-
-    function isLikelyHttpUrl(value) {
-      const text = String(value ?? '').trim();
-      if (!text) return false;
-      try {
-        const parsed = new URL(text);
-        return parsed.protocol === 'http:' || parsed.protocol === 'https:';
-      } catch (_error) {
-        return false;
-      }
-    }
-
-    function getWebsiteUrlFromRow(row, preferredPrefix) {
-      if (!row) return '';
-      const keys = Object.keys(row);
-      const lowerPrefix = String(preferredPrefix || '').toLowerCase();
-
-      const matchingKey = keys.find((key) => {
-        const normalized = key.toLowerCase();
-        const isWebsiteField = normalized.includes('url') || normalized.includes('link') || normalized.includes('website') || normalized.includes('web');
-        if (!isWebsiteField) return false;
-        if (!lowerPrefix) return true;
-        return normalized.includes(lowerPrefix);
-      });
-
-      if (!matchingKey) return '';
-      const candidate = row[matchingKey];
-      return isLikelyHttpUrl(candidate) ? String(candidate).trim() : '';
-    }
-
-    function buildGeologyWebsiteUrl(point, geologyRows) {
-      const firstGeologyRow = Array.isArray(geologyRows) && geologyRows.length ? geologyRows[0] : null;
-      const geologyRowUrl = getWebsiteUrlFromRow(firstGeologyRow, 'geology');
-      if (geologyRowUrl) return geologyRowUrl;
-
-      const drillholeGeologyUrl = getWebsiteUrlFromRow(point && point.row ? point.row : null, 'geology');
-      if (drillholeGeologyUrl) return drillholeGeologyUrl;
-
-      const generalGeologySheetUrl = getWebsiteUrlFromRow(firstGeologyRow, '');
-      if (generalGeologySheetUrl) return generalGeologySheetUrl;
-
-      const generalDrillholeUrl = getWebsiteUrlFromRow(point && point.row ? point.row : null, '');
-      if (generalDrillholeUrl) return generalDrillholeUrl;
-
-      const drillholeLabel = point && point.drillholeLabel ? point.drillholeLabel : '';
-      const query = encodeURIComponent(`${drillholeLabel} geology Hog Ranch`);
-      return `https://www.google.com/search?q=${query}`;
     }
 
     function getInlineDrillpadValues(row) {
@@ -3962,7 +4114,14 @@
             </div>
           `;
 
-          if (geologyRows.length) {
+          const lithologyLog = getLithologyIntervals(geologyRows);
+          if (lithologyLog.intervals.length) {
+            const countRow = document.createElement('div');
+            countRow.className = 'detail-row';
+            countRow.innerHTML = `<strong>Lithology Intervals</strong><span>${lithologyLog.intervals.length}</span>`;
+            geologyCard.appendChild(countRow);
+            geologyCard.appendChild(renderLithologyStripLog(lithologyLog.intervals, lithologyLog.unit));
+          } else if (geologyRows.length) {
             const primaryGeologyRow = geologyRows[0];
             Object.keys(primaryGeologyRow).forEach((key) => {
               const normalized = String(key).toLowerCase();
@@ -3994,28 +4153,6 @@
               geologyCard.appendChild(emptyGeology);
             }
           }
-
-          const geologyWebsiteUrl = buildGeologyWebsiteUrl(point, geologyRows);
-          const websiteRow = document.createElement('div');
-          websiteRow.className = 'detail-row';
-          const websiteLabel = document.createElement('strong');
-          websiteLabel.textContent = 'External Geology';
-          const websiteValue = document.createElement('span');
-          const websiteLink = document.createElement('a');
-          websiteLink.className = 'geology-link';
-          websiteLink.href = geologyWebsiteUrl;
-          websiteLink.target = '_blank';
-          websiteLink.rel = 'noopener noreferrer';
-          websiteLink.textContent = 'Open Website';
-          websiteValue.appendChild(websiteLink);
-          websiteRow.appendChild(websiteLabel);
-          websiteRow.appendChild(websiteValue);
-          geologyCard.appendChild(websiteRow);
-
-          const websiteNote = document.createElement('p');
-          websiteNote.className = 'geology-web-note';
-          websiteNote.textContent = 'Uses geology URL fields from your data when available; otherwise opens a web search for this drillhole.';
-          geologyCard.appendChild(websiteNote);
 
           selectedDetails.appendChild(geologyCard);
           selectedGeneralDetails.innerHTML = '';
@@ -4419,7 +4556,7 @@
     messages.textContent = 'Load Hog_Ranch.xlsm and optionally Pads/Tenement shapefiles (.zip/.geojson) to overlay spatial context.';
     syncGeologyFromWorkbook();
   </script>
-<script src="unlock.js"></script>
-<script src="autoload.js"></script>
+  <script src="unlock.js"></script>
+  <script src="autoload.js"></script>
 </body>
 </html>
