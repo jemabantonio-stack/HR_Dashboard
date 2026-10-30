@@ -2239,7 +2239,7 @@
       updateDetails(point);
     }
 
-    function renderStatusGroup(pieEl, listEl, targetEl, points, emptyMessage, target) {
+    function renderStatusGroup(pieEl, listEl, targetEl, points, emptyMessage, target, remainingTarget = target) {
       if (!pieEl || !listEl) return;
 
       const completed = points.filter((point) => point.status === 'completed').length;
@@ -2248,6 +2248,7 @@
 
       // Percentages and the pie are measured against the fixed 2026 target when one
       // is supplied (150 for RC, 8 for Core), so "Completed" can read above 100%.
+      // "Remaining to Target" uses remainingTarget instead (140 for RC).
       const denominator = target || total;
 
       if (targetEl) {
@@ -2268,8 +2269,8 @@
       const completedPct = Math.round((completed / denominator) * 100);
       const activePct = Math.round((active / denominator) * 100);
       // The third pie slice is the shortfall to the target, so it needs its own legend row.
-      const remaining = target ? Math.max(target - completed - active, 0) : 0;
-      const remainingPct = Math.max(100 - completedPct - activePct, 0);
+      const remaining = remainingTarget ? Math.max(remainingTarget - completed - active, 0) : 0;
+      const remainingPct = remainingTarget ? Math.round((remaining / remainingTarget) * 100) : 0;
       const completedColor = getStatusColor('completed');
       const activeColor = getStatusColor('active');
       const remainingColor = getStatusColor('planned');
@@ -2377,7 +2378,7 @@
         ? 'No holes of this type found.'
         : 'Load a workbook to view completion totals.';
 
-      renderStatusGroup(statusPieChartRC, statusSummaryContentRC, statusTargetRC, rcPoints, emptyMessage, 150);
+      renderStatusGroup(statusPieChartRC, statusSummaryContentRC, statusTargetRC, rcPoints, emptyMessage, 150, 140);
       renderStatusGroup(statusPieChartDD, statusSummaryContentDD, statusTargetDD, ddPoints, emptyMessage, 8);
     }
 
@@ -4574,7 +4575,7 @@
     messages.textContent = 'Load Hog_Ranch.xlsm and optionally Pads/Tenement shapefiles (.zip/.geojson) to overlay spatial context.';
     syncGeologyFromWorkbook();
   </script>
-<script src="unlock.js"></script>
-<script src="autoload.js"></script>
+  <script src="unlock.js"></script>
+  <script src="autoload.js"></script>
 </body>
 </html>
