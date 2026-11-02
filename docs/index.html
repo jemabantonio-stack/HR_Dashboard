@@ -2743,15 +2743,14 @@
         <div class="detail-card">
           <div class="status-subheading">Total Footage</div>
           <div class="panel-note">Includes footage from both completed and active drilling, cumulative through the selected date.</div>
+          ${dailyTotalsSummary.footageColumns.map(({ label, total }) => `
           <div class="detail-row">
-            <strong>Harris R-05</strong><span>${formatNumeric(dailyTotalsSummary.harrisFootage, 2)}</span>
-          </div>
+            <strong>${label}</strong><span>${formatNumeric(total, 2)}</span>
+          </div>`).join('')}
+          ${dailyTotalsSummary.grandTotalColumn ? `
           <div class="detail-row">
-            <strong>Premier RC R3</strong><span>${formatNumeric(dailyTotalsSummary.premierRcFootage, 2)}</span>
-          </div>
-          <div class="detail-row">
-            <strong>Premier Core PKC-2</strong><span>${formatNumeric(dailyTotalsSummary.pkcFootage, 2)}</span>
-          </div>
+            <strong>Total</strong><strong>${formatNumeric(dailyTotalsSummary.grandTotalColumn.total, 2)}</strong>
+          </div>` : ''}
         </div>
       ` : '';
 
@@ -3370,9 +3369,34 @@
       return today;
     }
 
+    const dailyTotalsFootageLabels = {
+      harrisr05footage: 'Harris R-05',
+      premierrcfootage: 'Premier RC R3',
+      pkc2footage: 'Premier Core PKC-2',
+    };
+
+    // Every non-date column in Daily_Totals is a rig footage column, except the sheet's own total column.
+    function getDailyTotalsFootageColumns() {
+      const firstRow = dailyTotalsRows[0] || {};
+      const dateKey = findKey(firstRow, ['date', 'day', 'report date', 'daily date', 'date (daily totals)']);
+      const columns = Object.keys(firstRow)
+        .filter((key) => key !== dateKey && String(key).trim() && !/^__EMPTY/.test(key))
+        .map((key) => {
+          const normalized = normalizeKeyName(key);
+          const label = dailyTotalsFootageLabels[normalized]
+            || String(key).replace(/\bfootage\b/i, '').replace(/\(.*?\)/g, '').trim()
+            || String(key).trim();
+          return { key, label, isTotal: normalized.startsWith('total') };
+        });
+      return {
+        footageColumns: columns.filter((column) => !column.isTotal),
+        grandTotalColumn: columns.find((column) => column.isTotal) || null,
+      };
+    }
+
     function getDailyTotalsSummaryForSelectedDate() {
       if (!Array.isArray(dailyTotalsRows) || !dailyTotalsRows.length) {
-        return { harrisFootage: 0, premierRcFootage: 0, pkcFootage: 0, dateOptions: [] };
+        return { footageColumns: [], grandTotalColumn: null, dateOptions: [] };
       }
       const dateOptions = getDailyTotalsDateOptions();
       const activeDate = selectedDailyTotalsDate || getDefaultDailyTotalsDate(dateOptions);
@@ -3387,9 +3411,7 @@
           })
         : dailyTotalsRows;
 
-      const harrisKey = findKey(allRowsUpToSelectedDate[0] || {}, ['harris footage', 'harris_footage', 'harris', 'harris footage (m)']);
-      const premierKey = findKey(allRowsUpToSelectedDate[0] || {}, ['premier rc footage', 'premier_rc_footage', 'premier rc', 'premier footage']);
-      const pkcKey = findKey(allRowsUpToSelectedDate[0] || {}, ['pkc-2 footage', 'pkc2 footage', 'pkc_2 footage', 'pkc 2 footage', 'pkc2']);
+      const { footageColumns, grandTotalColumn } = getDailyTotalsFootageColumns();
 
       const sumColumn = (key) => allRowsUpToSelectedDate.reduce((sum, row) => {
         const value = key ? parseNumber(row[key]) : NaN;
@@ -3397,9 +3419,8 @@
       }, 0);
 
       return {
-        harrisFootage: sumColumn(harrisKey),
-        premierRcFootage: sumColumn(premierKey),
-        pkcFootage: sumColumn(pkcKey),
+        footageColumns: footageColumns.map((column) => ({ ...column, total: sumColumn(column.key) })),
+        grandTotalColumn: grandTotalColumn ? { ...grandTotalColumn, total: sumColumn(grandTotalColumn.key) } : null,
         dateOptions,
       };
     }
@@ -3408,16 +3429,14 @@
       if (!Array.isArray(dailyTotalsRows) || !dailyTotalsRows.length) return '';
       const dateKey = findKey(dailyTotalsRows[0] || {}, ['date', 'day', 'report date', 'daily date', 'date (daily totals)']);
       if (!dateKey) return '';
-      const harrisKey = findKey(dailyTotalsRows[0] || {}, ['harris footage', 'harris_footage', 'harris', 'harris footage (m)']);
-      const premierKey = findKey(dailyTotalsRows[0] || {}, ['premier rc footage', 'premier_rc_footage', 'premier rc', 'premier footage']);
-      const pkcKey = findKey(dailyTotalsRows[0] || {}, ['pkc-2 footage', 'pkc2 footage', 'pkc_2 footage', 'pkc 2 footage', 'pkc2']);
+      const { footageColumns } = getDailyTotalsFootageColumns();
 
       const datesWithFootage = dailyTotalsRows
         .map((row) => {
-          const harris = harrisKey ? parseNumber(row[harrisKey]) : 0;
-          const premier = premierKey ? parseNumber(row[premierKey]) : 0;
-          const pkc = pkcKey ? parseNumber(row[pkcKey]) : 0;
-          const total = (Number.isNaN(harris) ? 0 : harris) + (Number.isNaN(premier) ? 0 : premier) + (Number.isNaN(pkc) ? 0 : pkc);
+          const total = footageColumns.reduce((sum, { key }) => {
+            const value = parseNumber(row[key]);
+            return sum + (Number.isNaN(value) ? 0 : value);
+          }, 0);
           return total > 0 ? normalizeDateValue(row[dateKey]) : '';
         })
         .filter((value) => value && value !== 'Invalid Date');
@@ -4575,7 +4594,7 @@
     messages.textContent = 'Load Hog_Ranch.xlsm and optionally Pads/Tenement shapefiles (.zip/.geojson) to overlay spatial context.';
     syncGeologyFromWorkbook();
   </script>
-<script src="unlock.js"></script>
-<script src="autoload.js"></script>
+  <script src="unlock.js"></script>
+  <script src="autoload.js"></script>
 </body>
 </html>
