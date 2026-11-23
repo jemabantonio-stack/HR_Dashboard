@@ -2450,7 +2450,7 @@
       const key = findKey(row, candidates);
       if (!key) return false;
       const text = String(row[key] ?? '').trim();
-      return text !== '' && !/^nots*sampled$/i.test(text);
+      return text !== '' && !/^not\s*sampled$/i.test(text);
     }
 
     function getCompletedDrillholePoints() {
@@ -4576,7 +4576,7 @@
     messages.textContent = 'Load Hog_Ranch.xlsm and optionally Pads/Tenement shapefiles (.zip/.geojson) to overlay spatial context.';
     syncGeologyFromWorkbook();
   </script>
-<script src="unlock.js"></script>
-<script src="autoload.js"></script>
+  <script src="unlock.js"></script>
+  <script src="autoload.js"></script>
 </body>
 </html>
