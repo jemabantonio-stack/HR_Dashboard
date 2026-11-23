@@ -2457,8 +2457,9 @@
       return Array.isArray(drillholePoints) ? drillholePoints.filter((point) => point.status === 'completed') : [];
     }
 
-    const labPickupDateKeys = ['lab pickup date', 'lab pick up date', 'lab_pickup_date'];
-    const assaysReceivedKeys = ['assays received', 'assay received', 'assays_received'];
+    // Published workbook carries Yes/blank flags; the master carries the source dates.
+    const labPickupDateKeys = ['samples submitted', 'lab pickup date', 'lab pick up date', 'lab_pickup_date'];
+    const assaysReceivedKeys = ['assays available', 'assays received', 'assay received', 'assays_received'];
 
     function updateAssayCoverageNote() {
       if (!assayCoverageNote) return;
@@ -4575,7 +4576,7 @@
     messages.textContent = 'Load Hog_Ranch.xlsm and optionally Pads/Tenement shapefiles (.zip/.geojson) to overlay spatial context.';
     syncGeologyFromWorkbook();
   </script>
-<script src="unlock.js"></script>
-<script src="autoload.js"></script>
+  <script src="unlock.js"></script>
+  <script src="autoload.js"></script>
 </body>
 </html>
