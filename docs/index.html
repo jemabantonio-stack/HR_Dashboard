@@ -2233,7 +2233,7 @@
 
       // Percentages and the pie are measured against the fixed 2026 target when one
       // is supplied (150 for RC, 8 for Core), so "Completed" can read above 100%.
-      // "Remaining to Target" uses remainingTarget instead (140 for RC).
+      // The unfilled remainder of the pie is the shortfall to the target (no legend row).
       const denominator = target || total;
 
       if (targetEl) {
@@ -2253,9 +2253,6 @@
       const activeEndAngle = Math.min((completed + active) / denominator, 1) * 360;
       const completedPct = Math.round((completed / denominator) * 100);
       const activePct = Math.round((active / denominator) * 100);
-      // The third pie slice is the shortfall to the target, so it needs its own legend row.
-      const remaining = remainingTarget ? Math.max(remainingTarget - completed - active, 0) : 0;
-      const remainingPct = remainingTarget ? Math.round((remaining / remainingTarget) * 100) : 0;
       const completedColor = getStatusColor('completed');
       const activeColor = getStatusColor('active');
       const remainingColor = getStatusColor('planned');
@@ -2272,12 +2269,6 @@
           <strong class="status-summary-count">${active}</strong>
           <span class="status-summary-pct">(${activePct}%)</span>
         </div>
-        ${remaining ? `
-        <div class="status-summary-item">
-          <span class="status-summary-label"><span class="status-dot status-dot-planned"></span>Remaining to Target</span>
-          <strong class="status-summary-count">${remaining}</strong>
-          <span class="status-summary-pct">(${remainingPct}%)</span>
-        </div>` : ''}
       `;
     }
 
@@ -4576,7 +4567,7 @@
     messages.textContent = 'Load Hog_Ranch.xlsm and optionally Pads/Tenement shapefiles (.zip/.geojson) to overlay spatial context.';
     syncGeologyFromWorkbook();
   </script>
-<script src="unlock.js"></script>
-<script src="autoload.js"></script>
+  <script src="unlock.js"></script>
+  <script src="autoload.js"></script>
 </body>
 </html>
